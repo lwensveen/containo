@@ -1,5 +1,13 @@
-import { numeric, pgEnum, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import {
+  index,
+  numeric,
+  pgEnum,
+  pgTable,
+  text,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { createTimestampColumn } from "./utils";
+import { sql } from "./client";
 
 export const modeEnum = pgEnum("mode_enum", ["sea", "air"]);
 export const poolStatusEnum = pgEnum("pool_status_enum", [
@@ -18,18 +26,26 @@ export const itemStatusEnum = pgEnum("item_status_enum", [
   "delivered",
 ]);
 
-export const pools = pgTable("pools", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  originPort: text("origin_port").notNull(),
-  destPort: text("dest_port").notNull(),
-  mode: modeEnum("mode").notNull(),
-  cutoffISO: text("cutoff_iso").notNull(),
-  capacityM3: numeric("capacity_m3").notNull(),
-  usedM3: numeric("used_m3").notNull().default("0"),
-  status: poolStatusEnum("status").notNull().default("open"),
-  createdAt: createTimestampColumn("created_at"),
-  updatedAt: createTimestampColumn("updated_at", true),
-});
+export const pools = pgTable(
+  "pools",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    originPort: text("origin_port").notNull(),
+    destPort: text("dest_port").notNull(),
+    mode: modeEnum("mode").notNull(),
+    cutoffISO: text("cutoff_iso").notNull(),
+    capacityM3: numeric("capacity_m3").notNull(),
+    usedM3: numeric("used_m3").notNull().default("0"),
+    status: poolStatusEnum("status").notNull().default("open"),
+    createdAt: createTimestampColumn("created_at"),
+    updatedAt: createTimestampColumn("updated_at", true),
+  },
+  (table) => ({
+    openLaneIdx: index("idx_pools_open_lane")
+      .on(table.originPort, table.destPort, table.mode, table.cutoffISO)
+      .where(sql`status = 'open'`),
+  }),
+);
 
 export const items = pgTable("items", {
   id: uuid("id").primaryKey().defaultRandom(),
