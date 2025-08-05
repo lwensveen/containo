@@ -10,6 +10,8 @@ export const QuoteInputSchema = z.object({
   mode: z.enum(['sea', 'air']),
   weightKg: z.number().positive(),
   dimsCm: DimsSchema,
+  originPort: z.string().min(1).optional(),
+  destPort: z.string().min(1).optional(),
 });
 
 export const QuoteSchema = z.object({
@@ -33,6 +35,47 @@ export const IntentResponseSchema = z.object({
   id: z.uuid(),
   accepted: z.literal(true),
   volumeM3: z.number(),
+});
+
+export const PoolIdParamSchema = z.object({
+  id: z.uuid(),
+});
+
+export const PoolItemsResponseSchema = z.array(
+  z.object({
+    id: z.uuid(),
+    userId: z.string(),
+    poolId: z.uuid().nullable().optional(),
+    originPort: z.string(),
+    destPort: z.string(),
+    mode: z.enum(['sea', 'air']),
+    cutoffISO: z.string(),
+    weightKg: z.string(),
+    volumeM3: z.string(),
+    length: z.string(),
+    width: z.string(),
+    height: z.string(),
+    status: z.enum(['pending', 'pooled', 'pay_pending', 'paid', 'shipped', 'delivered']),
+    createdAt: z.string().datetime(),
+    updatedAt: z.string().datetime(),
+  })
+);
+
+export const PoolStatusUpdateSchema = z.object({
+  status: z.enum(['open', 'closing', 'booked', 'in_transit', 'arrived']),
+});
+
+export const PoolSchema = z.object({
+  id: z.uuid(),
+  originPort: z.string(),
+  destPort: z.string(),
+  mode: z.enum(['sea', 'air']),
+  cutoffISO: z.string(),
+  capacityM3: z.string(),
+  usedM3: z.string(),
+  status: z.enum(['open', 'closing', 'booked', 'in_transit', 'arrived']),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
 });
 
 export type QuoteInput = z.infer<typeof QuoteInputSchema>;
