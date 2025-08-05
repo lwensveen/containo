@@ -1,4 +1,4 @@
-import { ENV } from '../../env';
+import { getEffectiveRates } from '../pricing/services';
 
 export function expectOne<T>(rows: T[], msg: string): T {
   const row = rows[0];
@@ -12,6 +12,8 @@ export type QuoteInput = {
   mode: 'sea' | 'air';
   weightKg: number;
   dimsCm: { length: number; width: number; height: number };
+  originPort?: string;
+  destPort?: string;
 };
 
 export type Quote = {
@@ -28,16 +30,18 @@ export function cmToM3({ length, width, height }: QuoteInput['dimsCm']) {
   return (length * width * height) / 1_000_000;
 }
 
-export function quotePrice(input: QuoteInput): Quote {
-  const { mode, weightKg, dimsCm } = input;
+export async function quotePrice(input: QuoteInput): Promise<Quote> {
+  const { mode, weightKg, dimsCm, originPort, destPort } = input;
   const volumeM3 = cmToM3(dimsCm);
+
+  const eff = await getEffectiveRates({ originPort, destPort, mode });
 
   if (mode === 'air') {
     const volumetricKg = volumeM3 * AIR_VOLUMETRIC_FACTOR;
     const billableKg = Math.max(weightKg, volumetricKg);
-    const base = billableKg * ENV.AIR_PRICE_PER_KG;
-    const costBasis = Math.max(base, ENV.AIR_MIN_PRICE);
-    const serviceFee = ENV.SERVICE_FEE_PER_ORDER;
+    const base = billableKg * eff.airPricePerKg;
+    const costBasis = Math.max(base, eff.airMinPrice);
+    const serviceFee = eff.serviceFeePerOrder;
     const userPrice = Math.round(costBasis + serviceFee);
     const margin = userPrice - costBasis;
 
@@ -50,17 +54,16 @@ export function quotePrice(input: QuoteInput): Quote {
       billableKg,
       breakdown: {
         billableKg,
-        perKg: ENV.AIR_PRICE_PER_KG,
-        min: ENV.AIR_MIN_PRICE,
+        perKg: eff.airPricePerKg,
+        min: eff.airMinPrice,
         serviceFee,
       },
     };
   }
 
-  const perCbm = ENV.SEA_PRICE_PER_CBM;
-  const base = volumeM3 * perCbm;
-  const costBasis = Math.max(base, ENV.SEA_MIN_PRICE);
-  const serviceFee = ENV.SERVICE_FEE_PER_ORDER;
+  const base = volumeM3 * eff.seaPricePerCbm;
+  const costBasis = Math.max(base, eff.seaMinPrice);
+  const serviceFee = eff.serviceFeePerOrder;
   const userPrice = Math.round(costBasis + serviceFee);
   const margin = userPrice - costBasis;
 
@@ -73,8 +76,8 @@ export function quotePrice(input: QuoteInput): Quote {
     billableKg: weightKg,
     breakdown: {
       volumeM3,
-      perCbm,
-      min: ENV.SEA_MIN_PRICE,
+      perCbm: eff.seaPricePerCbm,
+      min: eff.seaMinPrice,
       serviceFee,
     },
   };
