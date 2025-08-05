@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const Mode = z.enum(['sea', 'air']);
 export type Mode = z.infer<typeof Mode>;
