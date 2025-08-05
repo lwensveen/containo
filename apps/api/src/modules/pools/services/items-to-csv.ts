@@ -1,4 +1,4 @@
-import type { listItemsByPool } from './list-items-by-pool';
+import type { listItemsByPool } from './list-items-by-pool.js';
 
 export function itemsToCsv(rows: Awaited<ReturnType<typeof listItemsByPool>>) {
   const header = [

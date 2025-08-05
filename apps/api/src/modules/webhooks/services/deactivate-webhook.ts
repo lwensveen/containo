@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../../../db/client';
-import { webhookSubscriptions } from '../../../db/schema';
+import { db } from '../../../db/client.js';
+import { webhookSubscriptions } from '../../../db/schema.js';
 
 export async function deactivateWebhook(id: string) {
   const [row] = await db

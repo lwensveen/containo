@@ -1,7 +1,7 @@
-import { expectOne } from '../../pools/utils';
-import { db } from '../../../db/client';
-import { poolEvents } from '../../../db/schema';
-import { enqueueDeliveriesForEvent } from '../../webhooks/services';
+import { expectOne } from '../../pools/utils.js';
+import { db } from '../../../db/client.js';
+import { poolEvents } from '../../../db/schema.js';
+import { enqueueDeliveriesForEvent } from '../../webhooks/services/enqueue-deliveries-for-event.js';
 
 export async function emitPoolEvent(input: {
   poolId: string;

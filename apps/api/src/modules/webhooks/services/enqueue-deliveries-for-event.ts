@@ -1,6 +1,6 @@
-import { listWebhooks } from './list-webhooks';
-import { db } from '../../../db/client';
-import { webhookDeliveries } from '../../../db/schema';
+import { listWebhooks } from './list-webhooks.js';
+import { db } from '../../../db/client.js';
+import { webhookDeliveries } from '../../../db/schema.js';
 
 type PoolEventType =
   | 'pool_created'

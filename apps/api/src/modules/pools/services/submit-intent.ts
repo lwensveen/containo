@@ -1,6 +1,6 @@
-import { db } from '../../../db/client';
-import { items } from '../../../db/schema';
-import { expectOne } from '../utils';
+import { db } from '../../../db/client.js';
+import { items } from '../../../db/schema.js';
+import { expectOne } from '../utils.js';
 
 export async function submitIntent(input: {
   userId: string;

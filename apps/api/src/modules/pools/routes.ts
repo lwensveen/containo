@@ -1,13 +1,6 @@
 import type { FastifyInstance } from 'fastify';
-import {
-  getPoolById,
-  itemsToCsv,
-  listItemsByPool,
-  listPools,
-  submitIntent,
-  updatePoolStatus,
-} from './services';
-import { quotePrice } from './utils';
+import { z } from 'zod';
+import { quotePrice } from './utils.js';
 import {
   IntentInputSchema,
   IntentResponseSchema,
@@ -17,29 +10,61 @@ import {
   PoolStatusUpdateSchema,
   QuoteInputSchema,
   QuoteSchema,
-} from './schemas';
+} from './schemas.js';
+import { listPools } from './services/list-pools.js';
+import { submitIntent } from './services/submit-intent.js';
+import { getPoolById } from './services/get-pool-by-id.js';
+import { listItemsByPool } from './services/list-items-by-pool.js';
+import { itemsToCsv } from './services/items-to-csv.js';
+import { updatePoolStatus } from './services/update-pool-status.js';
 
 export function poolsRoutes(app: FastifyInstance) {
-  app.get('/', async () => listPools());
+  app.get('/', { schema: { response: { 200: z.array(PoolSchema) } } }, async () => listPools());
 
-  app.post(
+  app.post<{
+    Body: z.infer<typeof QuoteInputSchema>;
+    Reply: z.infer<typeof QuoteSchema>;
+  }>(
     '/quote',
-    { schema: { body: QuoteInputSchema, response: { 200: QuoteSchema } } },
-    async (req) => quotePrice(req.body)
+    {
+      schema: {
+        body: QuoteInputSchema,
+        response: { 200: QuoteSchema },
+      },
+    },
+    async (req) => {
+      return quotePrice(req.body);
+    }
   );
 
-  app.post(
+  app.post<{
+    Body: z.infer<typeof IntentInputSchema>;
+    Reply: z.infer<typeof IntentResponseSchema>;
+  }>(
     '/intent',
-    { schema: { body: IntentInputSchema, response: { 202: IntentResponseSchema } } },
+    {
+      schema: {
+        body: IntentInputSchema,
+        response: { 202: IntentResponseSchema },
+      },
+    },
     async (req, reply) => {
       const { id, volumeM3 } = await submitIntent(req.body);
       return reply.code(202).send({ id, accepted: true as const, volumeM3 });
     }
   );
 
-  app.get(
+  app.get<{
+    Params: z.infer<typeof PoolIdParamSchema>;
+    Reply: z.infer<typeof PoolItemsResponseSchema>;
+  }>(
     '/:id/items',
-    { schema: { params: PoolIdParamSchema, response: { 200: PoolItemsResponseSchema } } },
+    {
+      schema: {
+        params: PoolIdParamSchema,
+        response: { 200: PoolItemsResponseSchema },
+      },
+    },
     async (req, reply) => {
       const pool = await getPoolById(req.params.id);
       if (!pool) return reply.notFound('Pool not found');
@@ -47,7 +72,9 @@ export function poolsRoutes(app: FastifyInstance) {
     }
   );
 
-  app.get('/:id/items.csv', { schema: { params: PoolIdParamSchema } }, async (req, reply) => {
+  app.get<{
+    Params: z.infer<typeof PoolIdParamSchema>;
+  }>('/:id/items.csv', { schema: { params: PoolIdParamSchema } }, async (req, reply) => {
     const pool = await getPoolById(req.params.id);
     if (!pool) return reply.notFound('Pool not found');
     const rows = await listItemsByPool(req.params.id);
@@ -57,7 +84,11 @@ export function poolsRoutes(app: FastifyInstance) {
     return reply.send(csv);
   });
 
-  app.post(
+  app.post<{
+    Params: z.infer<typeof PoolIdParamSchema>;
+    Body: z.infer<typeof PoolStatusUpdateSchema>;
+    Reply: z.infer<typeof PoolSchema>;
+  }>(
     '/:id/status',
     {
       schema: {

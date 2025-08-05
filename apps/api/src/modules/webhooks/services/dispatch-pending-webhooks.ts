@@ -1,8 +1,8 @@
 import { and, asc, eq, inArray, lte } from 'drizzle-orm';
-import { db } from '../../../db/client';
-import { webhookDeliveries, webhookSubscriptions } from '../../../db/schema';
-import { hmacSha256 } from '../utils';
-import { scheduleRetry } from './schedule-retry';
+import { db } from '../../../db/client.js';
+import { webhookDeliveries, webhookSubscriptions } from '../../../db/schema.js';
+import { hmacSha256 } from '../utils.js';
+import { scheduleRetry } from './schedule-retry.js';
 
 export async function dispatchPendingWebhooks(limit = 20) {
   const now = new Date();

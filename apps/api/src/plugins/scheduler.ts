@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
-import { assignPendingItemsToPools } from '../modules/pools/services';
-import { dispatchPendingWebhooks } from '../modules/webhooks/services/dispatch-pending-webhooks';
+import { dispatchPendingWebhooks } from '../modules/webhooks/services/dispatch-pending-webhooks.js';
+import { assignPendingItemsToPools } from '../modules/pools/services/assign-pending-items.js';
 
 const schedulerPlugin: FastifyPluginAsync = async (app) => {
   const runPools = async () => {

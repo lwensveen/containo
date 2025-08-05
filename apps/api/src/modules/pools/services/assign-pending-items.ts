@@ -1,10 +1,10 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../../db/client';
-import { items, pools } from '../../../db/schema';
-import { ENV } from '../../../env';
-import { emitPoolEvent } from '../../events/services';
-import { expectOne } from '../utils';
+import { db } from '../../../db/client.js';
+import { items, pools } from '../../../db/schema.js';
+import { ENV } from '../../../env.js';
+import { expectOne } from '../utils.js';
+import { emitPoolEvent } from '../../events/services/emit-pool-event.js';
 
 export async function assignPendingItemsToPools(log: FastifyBaseLogger) {
   const pending = await db.select().from(items).where(eq(items.status, 'pending'));

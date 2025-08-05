@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../../../db/client';
-import { pools } from '../../../db/schema';
-import { emitPoolEvent } from '../../events/services';
+import { db } from '../../../db/client.js';
+import { pools } from '../../../db/schema.js';
+import { emitPoolEvent } from '../../events/services/emit-pool-event.js';
 
 export async function updatePoolStatus(
   poolId: string,

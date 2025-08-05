@@ -1,5 +1,5 @@
-import { db } from '../../../db/client';
-import { pools } from '../../../db/schema';
+import { db } from '../../../db/client.js';
+import { pools } from '../../../db/schema.js';
 
 export async function listPools() {
   return db.select().from(pools);

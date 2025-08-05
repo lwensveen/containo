@@ -10,14 +10,14 @@ import {
   timestamp,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { createTimestampColumn } from './utils';
+import { createTimestampColumn } from './utils.js';
 import {
   deliveryStatusEnum,
   itemStatusEnum,
   modeEnum,
   poolEventEnum,
   poolStatusEnum,
-} from './enums';
+} from './enums.js';
 
 export const pools = pgTable(
   'pools',

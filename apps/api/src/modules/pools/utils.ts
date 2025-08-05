@@ -1,4 +1,4 @@
-import { getEffectiveRates } from '../pricing/services';
+import { getEffectiveRates } from '../pricing/services.js';
 
 export function expectOne<T>(rows: T[], msg: string): T {
   const row = rows[0];
