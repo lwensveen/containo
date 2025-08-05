@@ -3,10 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --watch src/index.ts",
+    "dev": "bun --watch src/main.ts",
     "migrate:generate": "drizzle-kit generate --config ./drizzle.config.ts",
     "migrate:push": "DRIZZLE_LOG=info drizzle-kit push --config ./drizzle.config.ts",
-    "build": "tsup src/index.ts --format esm,cjs --dts --out-dir dist --clean",
+    "build": "tsup src/main.ts --format esm,cjs --dts --out-dir dist --clean",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
