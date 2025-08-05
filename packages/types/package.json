@@ -1,0 +1,9 @@
+{
+  "name": "@containo/types",
+  "version": "0.0.0",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "private": true,
+  "type": "module"
+}
