@@ -11,8 +11,8 @@ export const WebhookRecordSchema = z.object({
   url: z.url(),
   events: z.string(),
   isActive: z.boolean(),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
 });
 
 export const WebhookListResponse = z.array(WebhookRecordSchema);

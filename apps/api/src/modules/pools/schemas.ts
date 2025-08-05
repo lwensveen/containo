@@ -56,8 +56,8 @@ export const PoolItemsResponseSchema = z.array(
     width: z.string(),
     height: z.string(),
     status: z.enum(['pending', 'pooled', 'pay_pending', 'paid', 'shipped', 'delivered']),
-    createdAt: z.string().datetime(),
-    updatedAt: z.string().datetime(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
   })
 );
 
@@ -74,8 +74,8 @@ export const PoolSchema = z.object({
   capacityM3: z.string(),
   usedM3: z.string(),
   status: z.enum(['open', 'closing', 'booked', 'in_transit', 'arrived']),
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
 });
 
 export type QuoteInput = z.infer<typeof QuoteInputSchema>;
