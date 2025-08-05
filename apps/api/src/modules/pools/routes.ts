@@ -1,8 +1,19 @@
 import type { FastifyInstance } from "fastify";
 import { listPools, submitIntent } from "./services";
+import { quotePrice } from "./utils";
 
 export async function poolsRoutes(app: FastifyInstance) {
   app.get("/", async () => listPools());
+
+  app.post<{
+    Body: {
+      mode: "sea" | "air";
+      weightKg: number;
+      dimsCm: { length: number; width: number; height: number };
+    };
+  }>("/quote", async (req) => {
+    return quotePrice(req.body);
+  });
 
   app.post<{
     Body: {
