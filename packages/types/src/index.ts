@@ -1,6 +1,6 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-export const Mode = z.enum(["sea", "air"]);
+export const Mode = z.enum(['sea', 'air']);
 export type Mode = z.infer<typeof Mode>;
 
 export const Lane = z.object({
@@ -18,14 +18,7 @@ export const Item = z.object({
   weightKg: z.number().positive(),
   volumeM3: z.number().positive(),
   dimsCm: z.object({ l: z.number(), w: z.number(), h: z.number() }),
-  status: z.enum([
-    "pending",
-    "pooled",
-    "pay_pending",
-    "paid",
-    "shipped",
-    "delivered",
-  ]),
+  status: z.enum(['pending', 'pooled', 'pay_pending', 'paid', 'shipped', 'delivered']),
 });
 export type Item = z.infer<typeof Item>;
 
@@ -35,6 +28,6 @@ export const Pool = z.object({
   capacityM3: z.number().positive(),
   usedM3: z.number().min(0),
   itemIds: z.array(z.string()),
-  status: z.enum(["open", "closing", "booked", "in_transit", "arrived"]),
+  status: z.enum(['open', 'closing', 'booked', 'in_transit', 'arrived']),
 });
 export type Pool = z.infer<typeof Pool>;
