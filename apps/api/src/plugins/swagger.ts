@@ -1,0 +1,31 @@
+import swagger from '@fastify/swagger';
+import swaggerUI from '@fastify/swagger-ui';
+import {
+  jsonSchemaTransform,
+  serializerCompiler,
+  validatorCompiler,
+  ZodTypeProvider,
+} from 'fastify-type-provider-zod';
+import { FastifyPluginAsync } from 'fastify';
+
+const swaggerPlugin: FastifyPluginAsync = async (app) => {
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
+
+  app.withTypeProvider<ZodTypeProvider>();
+
+  await app.register(swagger, {
+    openapi: {
+      info: { title: 'Containo API', version: '0.1.0' },
+    },
+    transform: jsonSchemaTransform,
+  });
+
+  await app.register(swaggerUI, {
+    routePrefix: '/docs',
+  });
+
+  app.get('/openapi.json', async () => app.swagger());
+};
+
+export default swaggerPlugin;
