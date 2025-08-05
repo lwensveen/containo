@@ -1,24 +1,29 @@
 {
   "name": "@containo/api",
-  "dependencies": {
-    "@fastify/cors": "^11.1.0",
-    "@fastify/sensible": "^6.0.3",
-    "dotenv": "^17.2.1",
-    "fastify": "^5.4.0",
-    "zod": "^4.0.14"
-  },
-  "devDependencies": {
-    "@types/node": "^24.2.0",
-    "tsup": "^8.5.0",
-    "tsx": "^4.20.3",
-    "typescript": "5.9.2"
-  },
   "private": true,
+  "type": "module",
   "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "migrate:generate": "drizzle-kit generate --config ./drizzle.config.ts",
+    "migrate:push": "DRIZZLE_LOG=info drizzle-kit push --config ./drizzle.config.ts",
     "build": "tsup src/index.ts --format esm,cjs --dts --out-dir dist --clean",
-    "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "type": "module"
+  "dependencies": {
+    "@fastify/cors": "^9.0.0",
+    "@fastify/sensible": "^6.0.0",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.28.1",
+    "zod": "^3.23.8",
+    "drizzle-orm": "^0.31.0",
+    "postgres": "^3.4.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "drizzle-kit": "^0.24.0",
+    "tsup": "^8.1.0",
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.4"
+  }
 }
