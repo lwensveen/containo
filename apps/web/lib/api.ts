@@ -3,7 +3,13 @@ export type Mode = 'sea' | 'air';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
-export async function quote(body: { mode: Mode; weightKg: number; dimsCm: Dims }) {
+export async function quote(body: {
+  mode: Mode;
+  weightKg: number;
+  dimsCm: Dims;
+  originPort?: string;
+  destPort?: string;
+}) {
   const res = await fetch(`${API}/pools/quote`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -29,7 +35,7 @@ export async function intent(body: {
   originPort: string;
   destPort: string;
   mode: Mode;
-  cutoffISO: string; // YYYY-MM-DD ok
+  cutoffISO: string;
   weightKg: number;
   dimsCm: Dims;
 }) {
@@ -42,7 +48,7 @@ export async function intent(body: {
 
   if (!res.ok) throw new Error(`Intent failed: ${res.status}`);
 
-  return res.json() as Promise<{ id: string; accepted: true; volumeM3: number }>;
+  return (await res.json()) as Promise<{ id: string; accepted: true; volumeM3: number }>;
 }
 
 export async function getPools() {
