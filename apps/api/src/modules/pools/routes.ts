@@ -1,32 +1,35 @@
-import type { FastifyInstance } from "fastify";
-import { listPools, submitIntent } from "./services";
-import { quotePrice } from "./utils";
+import type { FastifyInstance } from 'fastify';
+import { listPools, submitIntent } from './services';
+import { quotePrice } from './utils';
+import { IntentInputSchema, IntentResponseSchema, QuoteInputSchema, QuoteSchema } from './schemas';
 
 export async function poolsRoutes(app: FastifyInstance) {
-  app.get("/", async () => listPools());
+  app.get('/', async () => listPools());
 
-  app.post<{
-    Body: {
-      mode: "sea" | "air";
-      weightKg: number;
-      dimsCm: { length: number; width: number; height: number };
-    };
-  }>("/quote", async (req) => {
-    return quotePrice(req.body);
-  });
+  app.post(
+    '/quote',
+    {
+      schema: {
+        body: QuoteInputSchema,
+        response: { 200: QuoteSchema },
+      },
+    },
+    async (req) => {
+      return quotePrice(req.body);
+    }
+  );
 
-  app.post<{
-    Body: {
-      userId: string;
-      originPort: string;
-      destPort: string;
-      mode: "sea" | "air";
-      cutoffISO: string;
-      weightKg: number;
-      dimsCm: { length: number; width: number; height: number };
-    };
-  }>("/intent", async (req, reply) => {
-    const { id, volumeM3 } = await submitIntent(req.body);
-    return reply.code(202).send({ id, accepted: true, volumeM3 });
-  });
+  app.post(
+    '/intent',
+    {
+      schema: {
+        body: IntentInputSchema,
+        response: { 202: IntentResponseSchema },
+      },
+    },
+    async (req, reply) => {
+      const { id, volumeM3 } = await submitIntent(req.body);
+      return reply.code(202).send({ id, accepted: true as const, volumeM3 });
+    }
+  );
 }
