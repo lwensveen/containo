@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export const EventTypeEnum = z.enum([
   'pool_created',
@@ -10,11 +10,11 @@ export const EventTypeEnum = z.enum([
 ]);
 
 export const EventRecordSchema = z.object({
-  id: z.string().uuid(),
-  poolId: z.string().uuid(),
+  id: z.uuid(),
+  poolId: z.uuid(),
   type: EventTypeEnum,
   payload: z.record(z.string(), z.unknown()),
-  createdAt: z.string().datetime(),
+  createdAt: z.date(),
 });
 
 export const EventRecentQuerySchema = z.object({
