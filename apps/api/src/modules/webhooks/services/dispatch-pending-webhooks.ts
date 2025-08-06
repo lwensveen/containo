@@ -1,5 +1,5 @@
 import { and, asc, eq, inArray, lte } from 'drizzle-orm';
-import { db, webhookDeliveries, webhookSubscriptions } from '@containo/db';
+import { db, webhookDeliveriesTable, webhookSubscriptionsTable } from '@containo/db';
 import { hmacSha256 } from '../utils.js';
 import { scheduleRetry } from './schedule-retry.js';
 
@@ -8,11 +8,14 @@ export async function dispatchPendingWebhooks(limit = 20) {
 
   const deliveries = await db
     .select()
-    .from(webhookDeliveries)
+    .from(webhookDeliveriesTable)
     .where(
-      and(eq(webhookDeliveries.status, 'pending'), lte(webhookDeliveries.nextAttemptAt, now as any))
+      and(
+        eq(webhookDeliveriesTable.status, 'pending'),
+        lte(webhookDeliveriesTable.nextAttemptAt, now as any)
+      )
     )
-    .orderBy(asc(webhookDeliveries.nextAttemptAt))
+    .orderBy(asc(webhookDeliveriesTable.nextAttemptAt))
     .limit(limit);
 
   if (!deliveries.length) return 0;
@@ -25,8 +28,8 @@ export async function dispatchPendingWebhooks(limit = 20) {
 
   const subs = await db
     .select()
-    .from(webhookSubscriptions)
-    .where(inArray(webhookSubscriptions.id, subIds));
+    .from(webhookSubscriptionsTable)
+    .where(inArray(webhookSubscriptionsTable.id, subIds));
 
   const subMap = new Map(subs.map((s) => [s.id, s]));
 
@@ -36,9 +39,9 @@ export async function dispatchPendingWebhooks(limit = 20) {
     const sub = subMap.get(d.subscriptionId);
     if (!sub || !sub.isActive) {
       await db
-        .update(webhookDeliveries)
+        .update(webhookDeliveriesTable)
         .set({ status: 'failed', lastError: 'subscription inactive' })
-        .where(eq(webhookDeliveries.id, d.id));
+        .where(eq(webhookDeliveriesTable.id, d.id));
       continue;
     }
 
@@ -65,9 +68,9 @@ export async function dispatchPendingWebhooks(limit = 20) {
 
       if (res.ok) {
         await db
-          .update(webhookDeliveries)
+          .update(webhookDeliveriesTable)
           .set({ status: 'success', responseStatus: res.status })
-          .where(eq(webhookDeliveries.id, d.id));
+          .where(eq(webhookDeliveriesTable.id, d.id));
         success++;
       } else {
         await scheduleRetry(d.id, d.attemptCount, `HTTP ${res.status}`);

@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { ENV } from '../../../env.js';
-import { db, webhookDeliveries } from '@containo/db';
+import { db, webhookDeliveriesTable } from '@containo/db';
 
 const BACKOFF = [15, 60, 300, 3600, 10800, 21600, 43200, 86400];
 
@@ -9,9 +9,9 @@ export async function scheduleRetry(id: string, attemptCount: number, lastError:
   const max = ENV.WEBHOOK_MAX_ATTEMPTS;
   if (nextAttempt >= max) {
     await db
-      .update(webhookDeliveries)
+      .update(webhookDeliveriesTable)
       .set({ status: 'failed', attemptCount: nextAttempt, lastError, responseStatus: null })
-      .where(eq(webhookDeliveries.id, id));
+      .where(eq(webhookDeliveriesTable.id, id));
     return;
   }
 
@@ -19,12 +19,12 @@ export async function scheduleRetry(id: string, attemptCount: number, lastError:
   const next = new Date(Date.now() + delaySec * 1000);
 
   await db
-    .update(webhookDeliveries)
+    .update(webhookDeliveriesTable)
     .set({
       attemptCount: nextAttempt,
       nextAttemptAt: next as any,
       lastError,
       responseStatus: null,
     })
-    .where(eq(webhookDeliveries.id, id));
+    .where(eq(webhookDeliveriesTable.id, id));
 }

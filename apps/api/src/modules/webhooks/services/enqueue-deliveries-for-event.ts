@@ -1,5 +1,5 @@
 import { listWebhooks } from './list-webhooks.js';
-import { db, webhookDeliveries } from '@containo/db';
+import { db, webhookDeliveriesTable } from '@containo/db';
 
 type PoolEventType =
   | 'pool_created'
@@ -25,7 +25,7 @@ export async function enqueueDeliveriesForEvent(event: {
 
   if (!targets.length) return 0;
 
-  await db.insert(webhookDeliveries).values(
+  await db.insert(webhookDeliveriesTable).values(
     targets.map((s) => ({
       subscriptionId: s.id,
       eventId: event.id,
