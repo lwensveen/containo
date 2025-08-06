@@ -1,42 +1,39 @@
 import { FastifyPluginAsync } from 'fastify';
-import { z } from 'zod/v4';
+import { z } from 'zod';
 import { createPickup, listPickups } from './services.js';
-import {
-  createPickupSchema,
-  pickupResponseSchema,
-} from '@containo/types/dist/warehouse-pickup/schemas.js';
+import { CreatePickupSchema, PickupResponseSchema } from '@containo/types';
 
 const warehousePickupRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{
-    Body: z.infer<typeof createPickupSchema>;
-    Reply: z.infer<typeof pickupResponseSchema>;
+    Body: z.infer<typeof CreatePickupSchema>;
+    Reply: z.infer<typeof PickupResponseSchema>;
   }>(
     '/warehouse/pickups',
     {
       schema: {
-        body: createPickupSchema,
-        response: { 201: pickupResponseSchema },
+        body: CreatePickupSchema,
+        response: { 201: PickupResponseSchema },
       },
     },
     async (request, reply) => {
       const dbRow = await createPickup(request.body);
-      const payload = pickupResponseSchema.parse(dbRow);
+      const payload = PickupResponseSchema.parse(dbRow);
       return reply.code(201).send(payload);
     }
   );
 
   fastify.get<{
-    Reply: z.infer<typeof pickupResponseSchema>[];
+    Reply: z.infer<typeof PickupResponseSchema>[];
   }>(
     '/warehouse/pickups',
     {
       schema: {
-        response: { 200: z.array(pickupResponseSchema) },
+        response: { 200: z.array(PickupResponseSchema) },
       },
     },
     async (_, reply) => {
       const all = await listPickups();
-      const payload = z.array(pickupResponseSchema).parse(all);
+      const payload = z.array(PickupResponseSchema).parse(all);
       return reply.send(payload);
     }
   );

@@ -1,16 +1,13 @@
-import { z } from 'zod/v4';
-import { eq, InferSelectModel } from 'drizzle-orm';
-import { db, warehousePickups } from '@containo/db';
-import { createPickupSchema } from '@containo/types';
+import { eq } from 'drizzle-orm';
+import { db, warehousePickupsTable } from '@containo/db';
+import { WarehousePickup, WarehousePickupInsert } from '@containo/types';
 
-export type Pickup = InferSelectModel<typeof warehousePickups>;
-
-export async function createPickup(data: z.infer<typeof createPickupSchema>): Promise<Pickup> {
+export async function createPickup(data: WarehousePickupInsert): Promise<WarehousePickup> {
   const [pickup] = await db
-    .insert(warehousePickups)
+    .insert(warehousePickupsTable)
     .values({
       courier: data.courier,
-      scheduleAt: data.scheduleISO,
+      scheduleAt: data.scheduleAt,
       items: data.items,
     })
     .returning();
@@ -32,34 +29,34 @@ export async function createPickup(data: z.infer<typeof createPickupSchema>): Pr
       body: JSON.stringify({
         pickupId: pickup.id,
         courier: data.courier,
-        scheduleAt: data.scheduleISO,
+        scheduleAt: data.scheduleAt,
         items: data.items,
       }),
     });
+
     if (!response.ok) {
       throw new Error(`Courier sandbox error: ${response.status}`);
     }
+
     await response.json();
 
     await db
-      .update(warehousePickups)
+      .update(warehousePickupsTable)
       .set({ status: 'dispatched', updatedAt: new Date() })
-      .where(eq(warehousePickups.id, pickup.id));
+      .where(eq(warehousePickupsTable.id, pickup.id));
 
-    return { ...pickup, status: 'dispatched' } as Pickup;
+    return { ...pickup, status: 'dispatched' } as WarehousePickup;
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-
     await db
-      .update(warehousePickups)
+      .update(warehousePickupsTable)
       .set({ status: 'error', updatedAt: new Date() })
-      .where(eq(warehousePickups.id, pickup.id));
+      .where(eq(warehousePickupsTable.id, pickup.id));
 
-    console.error('Courier sandbox failed:', msg);
-    return { ...pickup, status: 'error' } as Pickup;
+    console.error('Courier sandbox failed:', err);
+    return { ...pickup, status: 'error' } as WarehousePickup;
   }
 }
 
-export async function listPickups(): Promise<Pickup[]> {
-  return db.select().from(warehousePickups).orderBy(warehousePickups.scheduleAt);
+export async function listPickups(): Promise<WarehousePickup[]> {
+  return db.select().from(warehousePickupsTable).orderBy(warehousePickupsTable.scheduleAt);
 }
