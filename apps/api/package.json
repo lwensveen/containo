@@ -1,6 +1,8 @@
 {
   "name": "@containo/api",
   "dependencies": {
+    "@containo/db": "workspace:*",
+    "@containo/types": "workspace:*",
     "@fastify/cors": "^11.1.0",
     "@fastify/sensible": "^6.0.3",
     "@fastify/swagger": "^9.5.1",

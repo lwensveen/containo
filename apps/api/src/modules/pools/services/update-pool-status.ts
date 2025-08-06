@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../../../db/client.js';
-import { pools } from '../../../db/schema.js';
+import { db, pools } from '@containo/db';
 import { emitPoolEvent } from '../../events/services/emit-pool-event.js';
 
 export async function updatePoolStatus(

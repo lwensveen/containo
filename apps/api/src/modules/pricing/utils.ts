@@ -1,4 +1,4 @@
-import { laneRates } from '../../db/schema.js';
+import { laneRates } from '@containo/db';
 import { gte, isNull } from 'drizzle-orm';
 
 export function orNullableLte(now: Date, col: typeof laneRates.effectiveTo) {

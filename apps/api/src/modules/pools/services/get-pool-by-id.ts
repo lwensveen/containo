@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '../../../db/client.js';
-import { pools } from '../../../db/schema.js';
+import { db, pools } from '@containo/db';
 
 export async function getPoolById(id: string) {
   const rows = await db.select().from(pools).where(eq(pools.id, id)).limit(1);

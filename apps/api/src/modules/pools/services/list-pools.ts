@@ -1,5 +1,4 @@
-import { db } from '../../../db/client.js';
-import { pools } from '../../../db/schema.js';
+import { db, pools } from '@containo/db';
 
 export async function listPools() {
   return db.select().from(pools);

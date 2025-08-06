@@ -1,9 +1,28 @@
 {
   "name": "@containo/types",
+  "description": "Shared Zod schemas & TypeScript types for Containo monorepo",
   "version": "0.0.0",
-  "exports": {
-    ".": "./src/index.ts"
+  "dependencies": {
+    "drizzle-zod": "^0.8.2",
+    "zod": "^4.0.8"
   },
+  "devDependencies": {
+    "@containo/eslint-config": "workspace:*",
+    "@containo/typescript-config": "workspace:*",
+    "@types/node": "^24.1.0",
+    "eslint": "^9.31.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
   "private": true,
-  "type": "module"
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "eslint src ",
+    "typecheck": "tsc --noEmit"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "types": "dist/index.d.ts"
 }

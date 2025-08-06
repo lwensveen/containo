@@ -10,7 +10,7 @@ import {
   PoolStatusUpdateSchema,
   QuoteInputSchema,
   QuoteSchema,
-} from './schemas.js';
+} from '@containo/types';
 import { listPools } from './services/list-pools.js';
 import { submitIntent } from './services/submit-intent.js';
 import { getPoolById } from './services/get-pool-by-id.js';

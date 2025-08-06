@@ -1,13 +1,13 @@
 {
-  "name": "@repo/ui",
+  "name": "@containo/ui",
   "version": "0.0.0",
   "dependencies": {
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
   "devDependencies": {
-    "@repo/eslint-config": "0.0.0",
-    "@repo/typescript-config": "0.0.0",
+    "@containo/eslint-config": "0.0.0",
+    "@containo/typescript-config": "0.0.0",
     "@types/node": "^24.2.0",
     "@types/react": "19.1.9",
     "@types/react-dom": "19.1.7",

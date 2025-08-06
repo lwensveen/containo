@@ -1,7 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { ENV } from '../../../env.js';
-import { db } from '../../../db/client.js';
-import { webhookDeliveries } from '../../../db/schema.js';
+import { db, webhookDeliveries } from '@containo/db';
 
 const BACKOFF = [15, 60, 300, 3600, 10800, 21600, 43200, 86400];
 

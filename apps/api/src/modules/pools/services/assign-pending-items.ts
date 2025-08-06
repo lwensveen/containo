@@ -1,7 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../../db/client.js';
-import { items, pools } from '../../../db/schema.js';
+import { db, items, pools } from '@containo/db';
 import { ENV } from '../../../env.js';
 import { expectOne } from '../utils.js';
 import { emitPoolEvent } from '../../events/services/emit-pool-event.js';

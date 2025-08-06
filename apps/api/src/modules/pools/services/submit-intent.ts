@@ -1,5 +1,4 @@
-import { db } from '../../../db/client.js';
-import { items } from '../../../db/schema.js';
+import { db, items } from '@containo/db';
 import { expectOne } from '../utils.js';
 
 export async function submitIntent(input: {

@@ -1,5 +1,4 @@
-import { db } from '../../../db/client.js';
-import { webhookSubscriptions } from '../../../db/schema.js';
+import { db, webhookSubscriptions } from '@containo/db';
 
 export async function createWebhook(input: { url: string; events: string; secret: string }) {
   const [row] = await db

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import { EventRecentQuerySchema, EventRecentResponseSchema } from './schemas.js';
-import { z } from 'zod/v4';
+import { EventRecentQuerySchema, EventRecentResponseSchema } from '@containo/types';
 import { recentEvents } from './services/recent-events.js';
+import { z } from 'zod/v4';
 
 export function eventsRoutes(app: FastifyInstance) {
   app.get<{

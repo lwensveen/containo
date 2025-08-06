@@ -1,6 +1,5 @@
 import { and, asc, eq, inArray, lte } from 'drizzle-orm';
-import { db } from '../../../db/client.js';
-import { webhookDeliveries, webhookSubscriptions } from '../../../db/schema.js';
+import { db, webhookDeliveries, webhookSubscriptions } from '@containo/db';
 import { hmacSha256 } from '../utils.js';
 import { scheduleRetry } from './schedule-retry.js';
 

@@ -1,6 +1,5 @@
 import { and, desc, eq, lte } from 'drizzle-orm';
-import { db } from '../../db/client.js';
-import { laneRates } from '../../db/schema.js';
+import { db, laneRates } from '@containo/db';
 import { ENV } from '../../env.js';
 import { orNullableLte } from './utils.js';
 

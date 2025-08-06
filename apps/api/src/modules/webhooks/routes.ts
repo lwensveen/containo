@@ -5,7 +5,7 @@ import {
   WebhookIdParamSchema,
   WebhookListResponse,
   WebhookRecordSchema,
-} from './schemas.js';
+} from '@containo/types';
 import { listWebhooks } from './services/list-webhooks.js';
 import { createWebhook } from './services/create-webhook.js';
 import { deactivateWebhook } from './services/deactivate-webhook.js';
