@@ -1,5 +1,5 @@
 import { expectOne } from '../../pools/utils.js';
-import { db, poolEvents } from '@containo/db';
+import { db, poolEventsTable } from '@containo/db';
 import { enqueueDeliveriesForEvent } from '../../webhooks/services/enqueue-deliveries-for-event.js';
 
 export async function emitPoolEvent(input: {
@@ -9,13 +9,17 @@ export async function emitPoolEvent(input: {
 }) {
   const ev = expectOne(
     await db
-      .insert(poolEvents)
+      .insert(poolEventsTable)
       .values({
         poolId: input.poolId,
         type: input.type,
         payload: (input.payload ?? {}) as any,
       })
-      .returning({ id: poolEvents.id, type: poolEvents.type, payload: poolEvents.payload }),
+      .returning({
+        id: poolEventsTable.id,
+        type: poolEventsTable.type,
+        payload: poolEventsTable.payload,
+      }),
     'Failed to insert pool event'
   );
 
