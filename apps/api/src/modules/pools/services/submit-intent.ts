@@ -1,4 +1,4 @@
-import { db, items } from '@containo/db';
+import { db, poolItemsTable } from '@containo/db';
 import { expectOne } from '../utils.js';
 
 export async function submitIntent(input: {
@@ -15,7 +15,7 @@ export async function submitIntent(input: {
 
   const row = expectOne(
     await db
-      .insert(items)
+      .insert(poolItemsTable)
       .values({
         userId,
         originPort,
@@ -28,7 +28,7 @@ export async function submitIntent(input: {
         width: String(dimsCm.width),
         height: String(dimsCm.height),
       })
-      .returning({ id: items.id }),
+      .returning({ id: poolItemsTable.id }),
     'Failed to insert item intent'
   );
 

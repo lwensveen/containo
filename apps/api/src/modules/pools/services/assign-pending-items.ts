@@ -1,12 +1,15 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { and, eq } from 'drizzle-orm';
-import { db, items, pools } from '@containo/db';
+import { db, poolItemsTable, poolsTable } from '@containo/db';
 import { ENV } from '../../../env.js';
 import { expectOne } from '../utils.js';
 import { emitPoolEvent } from '../../events/services/emit-pool-event.js';
 
 export async function assignPendingItemsToPools(log: FastifyBaseLogger) {
-  const pending = await db.select().from(items).where(eq(items.status, 'pending'));
+  const pending = await db
+    .select()
+    .from(poolItemsTable)
+    .where(eq(poolItemsTable.status, 'pending'));
   if (!pending.length) return 0;
 
   let changed = 0;
@@ -16,14 +19,14 @@ export async function assignPendingItemsToPools(log: FastifyBaseLogger) {
 
     const found = await db
       .select()
-      .from(pools)
+      .from(poolsTable)
       .where(
         and(
-          eq(pools.originPort, it.originPort),
-          eq(pools.destPort, it.destPort),
-          eq(pools.mode, it.mode),
-          eq(pools.cutoffISO, it.cutoffISO),
-          eq(pools.status, 'open')
+          eq(poolsTable.originPort, it.originPort),
+          eq(poolsTable.destPort, it.destPort),
+          eq(poolsTable.mode, it.mode),
+          eq(poolsTable.cutoffISO, it.cutoffISO),
+          eq(poolsTable.status, 'open')
         )
       );
 
@@ -31,7 +34,7 @@ export async function assignPendingItemsToPools(log: FastifyBaseLogger) {
 
     if (!pool) {
       const created = await db
-        .insert(pools)
+        .insert(poolsTable)
         .values({
           originPort: it.originPort,
           destPort: it.destPort,
@@ -66,11 +69,14 @@ export async function assignPendingItemsToPools(log: FastifyBaseLogger) {
     const afterUsed = used + vol;
 
     if (afterUsed <= capN) {
-      await db.update(items).set({ status: 'pooled', poolId: pool.id }).where(eq(items.id, it.id));
       await db
-        .update(pools)
+        .update(poolItemsTable)
+        .set({ status: 'pooled', poolId: pool.id })
+        .where(eq(poolItemsTable.id, it.id));
+      await db
+        .update(poolsTable)
         .set({ usedM3: String(afterUsed) })
-        .where(eq(pools.id, pool.id));
+        .where(eq(poolsTable.id, pool.id));
 
       changed++;
       log.info({ pool: pool.id, item: it.id }, 'pooled item');
@@ -94,7 +100,7 @@ export async function assignPendingItemsToPools(log: FastifyBaseLogger) {
       if (beforeFill < 0.9 && afterFill >= 0.9) {
         await emitPoolEvent({ poolId: pool.id, type: 'fill_90', payload: { fill: afterFill } });
         if (pool.status === 'open') {
-          await db.update(pools).set({ status: 'closing' }).where(eq(pools.id, pool.id));
+          await db.update(poolsTable).set({ status: 'closing' }).where(eq(poolsTable.id, pool.id));
           await emitPoolEvent({
             poolId: pool.id,
             type: 'status_changed',

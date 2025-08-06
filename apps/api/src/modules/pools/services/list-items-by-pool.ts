@@ -1,6 +1,10 @@
 import { asc, eq } from 'drizzle-orm';
-import { db, items } from '@containo/db';
+import { db, poolItemsTable } from '@containo/db';
 
 export async function listItemsByPool(poolId: string) {
-  return db.select().from(items).where(eq(items.poolId, poolId)).orderBy(asc(items.createdAt));
+  return db
+    .select()
+    .from(poolItemsTable)
+    .where(eq(poolItemsTable.poolId, poolId))
+    .orderBy(asc(poolItemsTable.createdAt));
 }

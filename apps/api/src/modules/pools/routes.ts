@@ -6,7 +6,7 @@ import {
   IntentResponseSchema,
   PoolIdParamSchema,
   PoolItemsResponseSchema,
-  PoolSchema,
+  PoolSelectSchema,
   PoolStatusUpdateSchema,
   QuoteInputSchema,
   QuoteSchema,
@@ -19,7 +19,9 @@ import { itemsToCsv } from './services/items-to-csv.js';
 import { updatePoolStatus } from './services/update-pool-status.js';
 
 export function poolsRoutes(app: FastifyInstance) {
-  app.get('/', { schema: { response: { 200: z.array(PoolSchema) } } }, async () => listPools());
+  app.get('/', { schema: { response: { 200: z.array(PoolSelectSchema) } } }, async () =>
+    listPools()
+  );
 
   app.post<{
     Body: z.infer<typeof QuoteInputSchema>;
@@ -87,14 +89,14 @@ export function poolsRoutes(app: FastifyInstance) {
   app.post<{
     Params: z.infer<typeof PoolIdParamSchema>;
     Body: z.infer<typeof PoolStatusUpdateSchema>;
-    Reply: z.infer<typeof PoolSchema>;
+    Reply: z.infer<typeof PoolSelectSchema>;
   }>(
     '/:id/status',
     {
       schema: {
         params: PoolIdParamSchema,
         body: PoolStatusUpdateSchema,
-        response: { 200: PoolSchema },
+        response: { 200: PoolSelectSchema },
       },
     },
     async (req, reply) => {
