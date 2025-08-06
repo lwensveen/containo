@@ -8,6 +8,8 @@ import webhooksRoutes from './modules/webhooks/routes.js';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { poolsRoutes } from './modules/pools/routes.js';
 import dateSerializer from './plugins/date-serializer.js';
+import sellerBatchRoutes from './modules/seller-batch/routes.js';
+import warehousePickupRoutes from './modules/warehouse-pickup/routes.js';
 
 export async function buildServer() {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
@@ -21,7 +23,11 @@ export async function buildServer() {
 
   app.register(eventsRoutes, { prefix: '/events' });
   app.register(poolsRoutes, { prefix: '/pools' });
+  app.register(sellerBatchRoutes, { prefix: '/seller-batches' });
+  app.register(sellerBatchRoutes, { prefix: '/seller-batches' });
+  app.register(warehousePickupRoutes, { prefix: '/warehouse-pickup' });
   app.register(webhooksRoutes, { prefix: '/webhooks' });
+
   app.register(schedulerPlugin);
 
   return app;
