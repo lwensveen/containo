@@ -1,5 +1,5 @@
 import { and, desc, eq, lte } from 'drizzle-orm';
-import { db, laneRates } from '@containo/db';
+import { db, laneRatesTable } from '@containo/db';
 import { ENV } from '../../env.js';
 import { orNullableLte } from './utils.js';
 
@@ -35,17 +35,20 @@ export async function getEffectiveRates(input: {
 
   const rows = await db
     .select()
-    .from(laneRates)
+    .from(laneRatesTable)
     .where(
       and(
-        eq(laneRates.originPort, input.originPort),
-        eq(laneRates.destPort, input.destPort),
-        eq(laneRates.mode, input.mode),
-        eq(laneRates.active, true),
-        and(lte(laneRates.effectiveFrom, now as any), orNullableLte(now, laneRates.effectiveTo))
+        eq(laneRatesTable.originPort, input.originPort),
+        eq(laneRatesTable.destPort, input.destPort),
+        eq(laneRatesTable.mode, input.mode),
+        eq(laneRatesTable.active, true),
+        and(
+          lte(laneRatesTable.effectiveFrom, now as any),
+          orNullableLte(now, laneRatesTable.effectiveTo)
+        )
       )
     )
-    .orderBy(desc(laneRates.priority), desc(laneRates.effectiveFrom))
+    .orderBy(desc(laneRatesTable.priority), desc(laneRatesTable.effectiveFrom))
     .limit(1);
 
   const lr = rows[0];
