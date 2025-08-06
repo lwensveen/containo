@@ -1,11 +1,11 @@
-import { db, sellerBatches } from '@containo/db';
+import { db, sellerBatchesTable } from '@containo/db';
 import { desc, eq, InferSelectModel } from 'drizzle-orm';
 import { z } from 'zod/v4';
-import { createBatchSchema } from '@containo/types';
+import { CreateBatchSchema } from '@containo/types';
 
-export async function createSellerBatch(data: z.infer<typeof createBatchSchema>) {
+export async function createSellerBatch(data: z.infer<typeof CreateBatchSchema>) {
   const [batch] = await db
-    .insert(sellerBatches)
+    .insert(sellerBatchesTable)
     .values({
       sellerId: data.sellerId,
       items: data.items,
@@ -17,11 +17,11 @@ export async function createSellerBatch(data: z.infer<typeof createBatchSchema>)
 
 export async function listSellerBatches(
   sellerId?: string
-): Promise<InferSelectModel<typeof sellerBatches>[]> {
+): Promise<InferSelectModel<typeof sellerBatchesTable>[]> {
   return db
     .select()
-    .from(sellerBatches)
-    .where(sellerId ? eq(sellerBatches.sellerId, sellerId) : undefined)
-    .orderBy(desc(sellerBatches.createdAt))
+    .from(sellerBatchesTable)
+    .where(sellerId ? eq(sellerBatchesTable.sellerId, sellerId) : undefined)
+    .orderBy(desc(sellerBatchesTable.createdAt))
     .execute();
 }

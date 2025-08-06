@@ -1,43 +1,45 @@
 import { FastifyPluginAsync } from 'fastify';
-import { batchResponseSchema, createBatchSchema } from '@containo/types';
+import { z } from 'zod';
 import { createSellerBatch, listSellerBatches } from './services.js';
-import { z } from 'zod/v4';
+import { BatchResponseSchema, CreateBatchSchema } from '@containo/types';
 
-const getBatchesQuerySchema = z.object({ sellerId: z.uuid().optional() });
+const getBatchesQuerySchema = z.object({ sellerId: z.string().uuid().optional() });
 
 const sellerBatchRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{
-    Body: z.infer<typeof createBatchSchema>;
-    Reply: z.infer<typeof batchResponseSchema>;
+    Body: z.infer<typeof CreateBatchSchema>;
+    Reply: z.infer<typeof BatchResponseSchema>;
   }>(
     '/seller/batches',
     {
       schema: {
-        body: createBatchSchema,
-        response: { 201: batchResponseSchema },
+        body: CreateBatchSchema,
+        response: { 201: BatchResponseSchema },
       },
     },
     async (request, reply) => {
-      const data = await createSellerBatch(request.body);
-      return reply.code(201).send(data);
+      const dbRow = await createSellerBatch(request.body);
+      const payload = BatchResponseSchema.parse(dbRow);
+      return reply.code(201).send(payload);
     }
   );
 
   fastify.get<{
     Querystring: z.infer<typeof getBatchesQuerySchema>;
-    Reply: z.infer<typeof batchResponseSchema>[];
+    Reply: z.infer<typeof BatchResponseSchema>[];
   }>(
     '/seller/batches',
     {
       schema: {
         querystring: getBatchesQuerySchema,
-        response: { 200: z.array(batchResponseSchema) },
+        response: { 200: z.array(BatchResponseSchema) },
       },
     },
     async (request, reply) => {
       const { sellerId } = request.query;
-      const batches = await listSellerBatches(sellerId);
-      return reply.send(batches);
+      const rows = await listSellerBatches(sellerId);
+      const payload = z.array(BatchResponseSchema).parse(rows);
+      return reply.send(payload);
     }
   );
 };
