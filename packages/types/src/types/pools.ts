@@ -1,0 +1,17 @@
+import { z } from 'zod';
+import {
+  IntentInputSchema,
+  PoolInsertSchema,
+  PoolSelectSchema,
+  PoolUpdateSchema,
+  QuoteInputSchema,
+  QuoteResponseSchema,
+} from '../schemas/pools.js';
+
+export type Pool = z.infer<typeof PoolSelectSchema>;
+export type PoolInsert = z.infer<typeof PoolInsertSchema>;
+export type PoolUpdate = z.infer<typeof PoolUpdateSchema>;
+
+export type QuoteResponse = z.infer<typeof QuoteResponseSchema>;
+export type QuoteInput = z.infer<typeof QuoteInputSchema>;
+export type IntentInput = z.infer<typeof IntentInputSchema>;
