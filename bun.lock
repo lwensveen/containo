@@ -19,6 +19,7 @@
     "apps/api": {
       "name": "@containo/api",
       "dependencies": {
+        "@containo/db": "workspace:*",
         "@containo/types": "workspace:*",
         "@fastify/cors": "^11.1.0",
         "@fastify/sensible": "^6.0.3",
@@ -55,6 +56,13 @@
         "@types/react-dom": "19.1.7",
         "eslint": "^9.32.0",
         "typescript": "5.9.2",
+      },
+    },
+    "packages/checkout-plugin": {
+      "name": "@containo/checkout-plugin",
+      "version": "0.0.0",
+      "devDependencies": {
+        "esbuild": "^0.25.8",
       },
     },
     "packages/db": {
@@ -219,6 +227,8 @@
     "@commitlint/types": ["@commitlint/types@19.8.1", "", { "dependencies": { "@types/conventional-commits-parser": "^5.0.0", "chalk": "^5.3.0" } }, "sha512-/yCrWGCoA1SVKOks25EGadP9Pnj0oAIHGpl2wH2M2Y46dPM2ueb8wyCVOD7O3WCTkaJ0IkKvzhl1JY7+uCT2Dw=="],
 
     "@containo/api": ["@containo/api@workspace:apps/api"],
+
+    "@containo/checkout-plugin": ["@containo/checkout-plugin@workspace:packages/checkout-plugin"],
 
     "@containo/db": ["@containo/db@workspace:packages/db"],
 
