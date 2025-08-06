@@ -1,11 +1,4 @@
-import {
-  bigint,
-  boolean,
-  index,
-  pgTable,
-  text,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { bigint, boolean, index, pgTable, text, uuid } from 'drizzle-orm/pg-core';
 import { createTimestampColumn } from '../../utils.js';
 
 export const usersTable = pgTable(
