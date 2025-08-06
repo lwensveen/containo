@@ -46,7 +46,7 @@ async function _post<T>(path: string, body: any, headers: Record<string, string>
 }
 
 export async function quote(options: PoolOrderOptions): Promise<QuoteResponse> {
-  const data = await _post<QuoteResponse>('/pools/quote', {
+  const data = await _post<QuoteResponse>('/poolsTable/quote', {
     originPort: options.originPort,
     destPort: options.destPort,
     mode: options.mode,
@@ -65,7 +65,7 @@ export async function intent(
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
 
   const data = await _post<IntentResponse>(
-    '/pools/intent',
+    '/poolsTable/intent',
     {
       userId: options.metadata?.userId ?? '',
       originPort: options.originPort,
