@@ -18,6 +18,7 @@ import {
   poolEventEnum,
   poolStatusEnum,
 } from './enums.js';
+import { BatchItem } from '@containo/types';
 
 export const pools = pgTable(
   'pools',
@@ -45,7 +46,7 @@ export const items = pgTable(
   'items',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: text('user_id').notNull(),
+    userId: uuid('user_id').notNull(),
     poolId: uuid('pool_id').references(() => pools.id),
     originPort: text('origin_port').notNull(),
     destPort: text('dest_port').notNull(),
@@ -153,3 +154,23 @@ export const webhookDeliveries = pgTable(
     ),
   })
 );
+
+export const sellerBatches = pgTable('seller_batches', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sellerId: uuid('seller_id').notNull(),
+  // .references(() => sellers.id), for future sellers
+  items: jsonb('items').$type<BatchItem[]>().notNull(),
+  status: text('status').notNull().default('pending'),
+  createdAt: createTimestampColumn('created_at'),
+  updatedAt: createTimestampColumn('updated_at', true),
+});
+
+export const warehousePickups = pgTable('warehouse_pickups', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  courier: text('courier').notNull(),
+  scheduleAt: text('schedule_at').notNull(),
+  items: jsonb('items').$type<BatchItem[]>().notNull(),
+  status: text('status').notNull().default('scheduled'),
+  createdAt: createTimestampColumn('created_at'),
+  updatedAt: createTimestampColumn('updated_at', true),
+});
