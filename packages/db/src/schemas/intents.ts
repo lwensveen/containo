@@ -2,7 +2,7 @@ import { integer, numeric, pgTable, timestamp, uniqueIndex, varchar } from 'driz
 import { sql } from 'drizzle-orm';
 import { createTimestampColumn } from '../utils.js';
 
-export const intents = pgTable('intents', {
+export const intentsTable = pgTable('intents', {
   id: varchar('id', { length: 36 }).primaryKey(),
   idempotencyKey: varchar('idempotency_key', { length: 100 }),
   originPort: varchar('origin_port', { length: 3 }).notNull(),
@@ -17,5 +17,5 @@ export const intents = pgTable('intents', {
 });
 
 export const uxIntentsIdem = uniqueIndex('ux_intents_idempotency')
-  .on(intents.idempotencyKey)
+  .on(intentsTable.idempotencyKey)
   .where(sql`idempotency_key is not null`);

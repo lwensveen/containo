@@ -2,6 +2,7 @@ export * from './auth/accounts.js';
 export * from './auth/passkeys.js';
 export * from './auth/sessions.js';
 export * from './auth/verifications.js';
+export * from './intents.js';
 export * from './lane-rates.js';
 export * from './pool-events.js';
 export * from './pool-items.js';

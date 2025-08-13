@@ -32,42 +32,9 @@ export const QuoteSchema = z.object({
 
 export const QuoteResponseSchema = QuoteSchema;
 
-export const IntentInputSchema = QuoteInputSchema.extend({
-  userId: z.string().min(1),
-  originPort: z.string().min(1),
-  destPort: z.string().min(1),
-  cutoffISO: z.string().min(1),
-});
-
-export const IntentResponseSchema = z.object({
-  id: z.uuid(),
-  accepted: z.literal(true),
-  volumeM3: z.number(),
-});
-
 export const PoolIdParamSchema = z.object({
   id: z.uuid(),
 });
-
-export const PoolItemsResponseSchema = z.array(
-  z.object({
-    id: z.uuid(),
-    userId: z.string(),
-    poolId: z.uuid().nullable().optional(),
-    originPort: z.string(),
-    destPort: z.string(),
-    mode: z.enum(['sea', 'air']),
-    cutoffISO: z.string(),
-    weightKg: z.string(),
-    volumeM3: z.string(),
-    length: z.string(),
-    width: z.string(),
-    height: z.string(),
-    status: z.enum(['pending', 'pooled', 'pay_pending', 'paid', 'shipped', 'delivered']),
-    createdAt: z.date(),
-    updatedAt: z.date(),
-  })
-);
 
 export const PoolStatusUpdateSchema = z.object({
   status: z.enum(['open', 'closing', 'booked', 'in_transit', 'arrived']),
