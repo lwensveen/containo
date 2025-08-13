@@ -19,9 +19,11 @@ import { itemsToCsv } from './services/items-to-csv.js';
 import { updatePoolStatus } from './services/update-pool-status.js';
 
 export function poolsRoutes(app: FastifyInstance) {
-  app.get('/', { schema: { response: { 200: z.array(PoolSelectSchema) } } }, async () =>
-    listPools()
-  );
+  app.get('/', { schema: { response: { 200: z.array(PoolSelectSchema) } } }, async (req, reply) => {
+    const rows = await listPools();
+
+    return reply.type('application/json').send(rows ?? []);
+  });
 
   app.post<{
     Body: z.infer<typeof QuoteInputSchema>;
@@ -51,7 +53,9 @@ export function poolsRoutes(app: FastifyInstance) {
       },
     },
     async (req, reply) => {
-      const { id, volumeM3 } = await submitIntent(req.body);
+      const idempotencyKey = (req.headers['idempotency-key'] as string | undefined) ?? null;
+      const { id, volumeM3 } = await submitIntent({ ...req.body, idempotencyKey });
+
       return reply.code(202).send({ id, accepted: true as const, volumeM3 });
     }
   );
