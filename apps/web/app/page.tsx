@@ -2,144 +2,178 @@ import Link from 'next/link';
 import { ArrowRight, Boxes, DollarSign, Shield, Truck, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Container } from '@/components/layout/container';
+import { Section } from '@/components/layout/section';
 
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-white to-slate-50">
-      <section className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">
-        <Badge className="rounded-full px-3 py-1">Global consolidation, simplified</Badge>
+      {/* HERO */}
+      <Section className="pt-24 pb-16 text-center">
+        <Container>
+          <h1 className="font-heading mx-auto mt-2 max-w-4xl text-balance text-5xl font-extrabold leading-tight tracking-tight text-slate-900 md:text-6xl lg:text-7xl">
+            Pool shipments,{' '}
+            <span className="bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+              share the space
+            </span>
+            , pay less
+          </h1>
+          <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-7 text-slate-600">
+            Containo groups compatible shipments on popular routes. You only pay for the space you
+            use. Get a price in seconds and reserve your spot. We keep you updated until delivery.
+          </p>
 
-        <h1 className="font-heading mt-6 text-4xl font-bold tracking-tight md:text-6xl">
-          Pool small shipments, pay less, ship faster
-        </h1>
+          <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Link href="/quote">
+              <Button
+                size="lg"
+                className="h-12 px-8 text-base shadow-lg shadow-blue-500/10 hover:shadow-blue-500/20"
+              >
+                Get a quote
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/demo">
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-12 px-8 text-base border-slate-200/70 hover:bg-white/80"
+              >
+                See how it works
+              </Button>
+            </Link>
+          </div>
 
-        <p className="mx-auto mt-4 max-w-2xl text-slate-600">
-          Containo pools compatible shipments on popular lanes (e.g. AMS → BKK) so you pay for the
-          space you use. Quote in seconds, reserve with an idempotent intent, and track with signed
-          webhooks.
-        </p>
+          <HeroStrip />
+        </Container>
+      </Section>
 
-        <div className="mt-8 flex items-center justify-center gap-3">
-          <Link href="/demo">
-            <Button size="lg">
-              Try the demo
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-          <Link href="/admin/pools">
-            <Button size="lg" variant="outline">
-              Ops dashboard
-            </Button>
-          </Link>
-        </div>
+      {/* VALUE POINTS */}
+      <Section className="pb-16">
+        <Container>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <Feature
+              icon={<Boxes className="h-5 w-5" />}
+              title="Pay only for your share"
+              text="Your order rides with others on the same lane. That’s how we cut costs while keeping ETAs reliable."
+            />
+            <Feature
+              icon={<DollarSign className="h-5 w-5" />}
+              title="Straightforward pricing"
+              text="Simple price per kg / m³. No surprise fees. You see the total before you book."
+            />
+            <Feature
+              icon={<Zap className="h-5 w-5" />}
+              title="Fast when you need it"
+              text="Choose sea for best price or air for speed. Switch anytime—your order still pools with others."
+            />
+          </div>
+        </Container>
+      </Section>
 
-        <HeroStrip />
-      </section>
+      {/* HOW IT WORKS */}
+      <Section>
+        <Container>
+          <Card className="border-slate-200/70 bg-gradient-to-br from-white to-slate-50 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="font-heading text-2xl tracking-tight">How it works</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <ol className="grid gap-6 md:grid-cols-4">
+                <Step n={1} title="Tell us where">
+                  Pick origin & destination, add weight and size. We show price and ETA.
+                </Step>
+                <Step n={2} title="Reserve your spot">
+                  Book your share in the next pool. No minimums or long forms.
+                </Step>
+                <Step n={3} title="We pack with others">
+                  We group compatible shipments and load when the pool is ready.
+                </Step>
+                <Step n={4} title="Track to delivery">
+                  Live status updates from pickup to arrival. We’ll let you know at each step.
+                </Step>
+              </ol>
 
-      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-6 pb-4 md:grid-cols-3">
-        <Feature
-          icon={<Boxes className="h-5 w-5" />}
-          title="Buyer-driven pooling"
-          text="Join an open pool on your lane. We combine compatible freight to optimize cost & transit."
-        />
-        <Feature
-          icon={<DollarSign className="h-5 w-5" />}
-          title="Transparent pricing"
-          text="Simple tiers per kg / m³. Quotes reflect lane rules and capacity."
-        />
-        <Feature
-          icon={<Zap className="h-5 w-5" />}
-          title="API-first"
-          text="Quote, intent, events, and webhooks out of the box. Integrate in an afternoon."
-        />
-      </section>
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Link href="/quote">
+                  <Button className="shadow-blue-500/10 hover:shadow-blue-500/20">
+                    Get my price
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/demo">
+                  <Button variant="outline" className="border-slate-200/70 hover:bg-white/80">
+                    Watch the flow
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </Container>
+      </Section>
 
-      <section className="mx-auto max-w-6xl px-6 py-8">
-        <Card className="border-slate-200">
-          <CardHeader>
-            <CardTitle className="font-heading">How it works</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ol className="grid gap-4 md:grid-cols-4">
-              <Step n={1} title="Get a quote">
-                Enter lane, weight & dims — see price and ETA instantly.
-              </Step>
-              <Step n={2} title="Submit intent">
-                Reserve space with an idempotent API call or the checkout widget.
-              </Step>
-              <Step n={3} title="Pool fills">
-                Items are assigned to an open pool; receive <code>fill_80/90/100</code> events.
-              </Step>
-              <Step n={4} title="Ship & track">
-                Ops flips status booked → in_transit → arrived. You get signed webhooks.
-              </Step>
-            </ol>
-            <div className="mt-6 flex gap-3">
-              <Link href="/docs">
-                <Button variant="outline">View API docs</Button>
-              </Link>
-              <Link href="/demo">
-                <Button>
-                  Run the demo
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
+      {/* REASSURANCE */}
+      <Section className="pb-20 pt-4">
+        <Container>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <Card className="border-slate-200/70 bg-gradient-to-br from-white to-slate-50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <CardTitle className="font-heading text-xl">Clear tracking</CardTitle>
+                <span className="rounded-lg bg-blue-500/10 p-2 text-blue-600">
+                  <Truck className="h-5 w-5" />
+                </span>
+              </CardHeader>
+              <CardContent className="text-slate-600">
+                Follow your shipment from booked → in transit → arrived. We’ll keep you posted—no
+                chasing.
+              </CardContent>
+            </Card>
 
-      <section className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-6 pb-16 md:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="font-heading">Built for operators</CardTitle>
-            <Truck className="h-5 w-5 text-slate-500" />
-          </CardHeader>
-          <CardContent className="text-slate-600">
-            Lightweight ops views to flip pool status, export CSVs, and keep partners in sync.
-            Webhooks retry with backoff.
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="font-heading">Secure & predictable</CardTitle>
-            <Shield className="h-5 w-5 text-slate-500" />
-          </CardHeader>
-          <CardContent className="text-slate-600">
-            Signed events (<code>x-containo-signature</code>) and idempotent endpoints prevent
-            double booking.
-          </CardContent>
-        </Card>
-      </section>
+            <Card className="border-slate-200/70 bg-gradient-to-br from-white to-slate-50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <CardTitle className="font-heading text-xl">No surprises</CardTitle>
+                <span className="rounded-lg bg-blue-500/10 p-2 text-blue-600">
+                  <Shield className="h-5 w-5" />
+                </span>
+              </CardHeader>
+              <CardContent className="text-slate-600">
+                Up-front price, simple terms, and customer support that answers. Shipping made
+                predictable.
+              </CardContent>
+            </Card>
+          </div>
+        </Container>
+      </Section>
     </main>
   );
 }
 
 function HeroStrip() {
   return (
-    <div className="mx-auto mt-12 grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-3">
-      <Stat kpi="~35 USD/m³" label="Typical sea consolidation" />
-      <Stat kpi="80/90/100%" label="Fill events & cutover" />
-      <Stat kpi="< 1 day" label="API integration time" />
+    <div className="mx-auto mt-16 max-w-4xl">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Stat kpi="From ~$35" label="Typical sea share" />
+        <Stat kpi="From ~$90" label="Typical air share" />
+        <Stat kpi="Minutes to start" label="Online quote & booking" />
+      </div>
     </div>
   );
 }
 
 function Stat({ kpi, label }: { kpi: string; label: string }) {
   return (
-    <div className="rounded-2xl border bg-white p-4 text-left shadow-sm">
-      <div className="font-heading text-xl font-semibold">{kpi}</div>
-      <div className="text-sm text-slate-600">{label}</div>
+    <div className="rounded-xl bg-white/80 p-5 text-left shadow-sm ring-1 ring-slate-900/10 backdrop-blur-sm">
+      <div className="font-heading text-2xl font-semibold text-slate-900">{kpi}</div>
+      <div className="mt-1 text-sm text-slate-600">{label}</div>
     </div>
   );
 }
 
 function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
-    <Card className="border-slate-200">
-      <CardHeader className="flex flex-row items-center gap-2 space-y-0">
-        <span className="rounded-lg border bg-white p-2">{icon}</span>
+    <Card className="border-slate-200/70 bg-gradient-to-b from-white to-slate-50 transition-shadow hover:shadow-md">
+      <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-4">
+        <span className="rounded-lg bg-blue-500/10 p-2.5 text-blue-600">{icon}</span>
         <CardTitle className="font-heading text-lg">{title}</CardTitle>
       </CardHeader>
       <CardContent className="text-slate-600">{text}</CardContent>
@@ -149,10 +183,14 @@ function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; 
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
-    <li className="rounded-xl border bg-white p-4 shadow-sm">
-      <div className="mb-1 text-xs font-mono text-slate-500">STEP {n}</div>
-      <div className="font-heading text-base font-semibold">{title}</div>
-      <p className="mt-1 text-sm text-slate-600">{children}</p>
+    <li className="group relative rounded-xl bg-white/80 p-5 shadow-sm ring-1 ring-slate-900/10 transition-all hover:shadow-md">
+      <div className="absolute -left-2 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-sm font-bold text-white shadow-md shadow-blue-500/20">
+        {n}
+      </div>
+      <div className="ml-6">
+        <h3 className="mb-2 font-heading text-lg font-semibold text-slate-900">{title}</h3>
+        <p className="text-sm leading-6 text-slate-600">{children}</p>
+      </div>
     </li>
   );
 }
