@@ -29,7 +29,6 @@ export async function buildServer() {
   app.register(eventsRoutes, { prefix: '/pool-events' });
   app.register(poolsRoutes, { prefix: '/pools' });
   app.register(sellerBatchRoutes, { prefix: '/seller-batches' });
-  app.register(sellerBatchRoutes, { prefix: '/seller-batches' });
   app.register(warehousePickupRoutes, { prefix: '/warehouse-pickups' });
   app.register(webhooksRoutes, { prefix: '/webhooks' });
 
