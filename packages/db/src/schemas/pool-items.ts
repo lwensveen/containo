@@ -1,4 +1,4 @@
-import { index, numeric, pgTable, text, uuid } from 'drizzle-orm/pg-core';
+import { index, numeric, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { itemStatusEnum, modeEnum } from '../enums.js';
 import { createTimestampColumn } from '../utils.js';
 import { sql } from 'drizzle-orm';
@@ -13,6 +13,7 @@ export const poolItemsTable = pgTable(
     originPort: text('origin_port').notNull(),
     destPort: text('dest_port').notNull(),
     mode: modeEnum('mode').notNull(),
+    idempotencyKey: text('idempotency_key'),
     cutoffISO: text('cutoff_iso').notNull(),
     weightKg: numeric('weight_kg').notNull(),
     volumeM3: numeric('volume_m3').notNull(),
@@ -28,5 +29,6 @@ export const poolItemsTable = pgTable(
       .on(t.originPort, t.destPort, t.mode, t.cutoffISO)
       .where(sql`status = 'pending'`),
     byPoolIdx: index('idx_items_by_pool').on(t.poolId),
+    uxIntentIdem: uniqueIndex('ux_pool_items_idempotency').on(t.idempotencyKey), // ⬅️ new
   })
 );
