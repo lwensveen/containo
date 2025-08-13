@@ -4,7 +4,8 @@
 
 Monorepo containing:
 
-- **API** (`apps/api`) – Fastify + Zod + Drizzle (Postgres). Handles quotes, intents, pooling, events, and webhooks.
+- **API** (`apps/api`) – Fastify + Zod + Drizzle (Postgres). Handles quotes, intentsTable, pooling, events, and
+  webhooks.
 - **Web** (`apps/web`) – Next.js app for quoting and basic ops.
 - **Packages** – shared UI, types, ESLint/TS configs, and a tiny **checkout plugin** (optional) for third‑party sites.
 
@@ -235,7 +236,7 @@ See `apps/api/.env.example`. Common ones:
 ## 🧭 Roadmap (execution order)
 
 1. One‑command local stack (Docker Compose + seeds)
-2. Idempotency for intents + partial unique index for open pools per lane
+2. Idempotency for intentsTable + partial unique index for open pools per lane
 3. Buyer checkout plugin demo page in `apps/web`
 4. Seller batch API + API keys
 5. First‑mile pickups module + basic courier integration
