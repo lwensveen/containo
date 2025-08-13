@@ -1,17 +1,9 @@
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
-import {
-  jsonSchemaTransform,
-  serializerCompiler,
-  validatorCompiler,
-  ZodTypeProvider,
-} from 'fastify-type-provider-zod';
+import { jsonSchemaTransform, ZodTypeProvider } from 'fastify-type-provider-zod';
 import { FastifyPluginAsync } from 'fastify';
 
 const swaggerPlugin: FastifyPluginAsync = async (app) => {
-  app.setValidatorCompiler(validatorCompiler);
-  app.setSerializerCompiler(serializerCompiler);
-
   app.withTypeProvider<ZodTypeProvider>();
 
   await app.register(swagger, {

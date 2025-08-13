@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { createSellerBatch, listSellerBatches } from './services.js';
 import { BatchResponseSchema, CreateBatchSchema } from '@containo/types';
 

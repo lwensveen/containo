@@ -1,10 +1,9 @@
-import { integer, numeric, pgTable, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
+import { integer, numeric, pgTable, timestamp, varchar } from 'drizzle-orm/pg-core';
 import { createTimestampColumn } from '../utils.js';
 
 export const intentsTable = pgTable('intents', {
   id: varchar('id', { length: 36 }).primaryKey(),
-  idempotencyKey: varchar('idempotency_key', { length: 100 }),
+  idempotencyKey: varchar('idempotency_key', { length: 100 }).unique(),
   originPort: varchar('origin_port', { length: 3 }).notNull(),
   destPort: varchar('dest_port', { length: 3 }).notNull(),
   mode: varchar('mode', { length: 8 }).notNull(),
@@ -15,7 +14,3 @@ export const intentsTable = pgTable('intents', {
   dimsH: integer('dims_h_cm').notNull(),
   createdAt: createTimestampColumn('created_at').notNull(),
 });
-
-export const uxIntentsIdem = uniqueIndex('ux_intents_idempotency')
-  .on(intentsTable.idempotencyKey)
-  .where(sql`idempotency_key is not null`);

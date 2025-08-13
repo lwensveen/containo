@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { bookContainer } from '../../jobs/book-container.js';
 
 const bookBodySchema = z.object({ poolId: z.uuid() });
@@ -8,7 +8,7 @@ const consolidationRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{
     Body: z.infer<typeof bookBodySchema>;
   }>(
-    '/consolidation/book',
+    '/book',
     {
       schema: {
         body: bookBodySchema,

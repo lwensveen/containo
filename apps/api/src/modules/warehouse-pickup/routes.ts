@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { createPickup, listPickups } from './services.js';
 import { CreatePickupSchema, PickupResponseSchema } from '@containo/types';
 
