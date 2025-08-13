@@ -3,27 +3,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-html,
-body {
-    max-width: 100vw;
-    overflow-x: hidden;
-}
-
-* {
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-}
-
-a {
-    color: inherit;
-    text-decoration: none;
-}
-
-.imgDark {
-    display: none;
-}
-
 @media (prefers-color-scheme: dark) {
     html {
         color-scheme: dark;
@@ -153,21 +132,8 @@ a {
     body {
         @apply bg-background text-foreground;
     }
-}
 
-:root {
-    --font-body: var(--font-inter);
-    --font-heading: var(--font-space-grotesk);
-}
-
-html, body {
-    font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-}
-
-.font-body {
-    font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-}
-
-.font-heading {
-    font-family: var(--font-heading), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-heading), ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
 }
