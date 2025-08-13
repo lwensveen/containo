@@ -133,43 +133,43 @@ All responses emit ISO timestamps (via preSerialization date serializer).
 ### Pools
 
 - **Quote**
-    - `POST /pools/quote`
-    - **Body**
+  - `POST /pools/quote`
+  - **Body**
 
-      ```ts
-      {
-        originPort: string; // e.g. "AMS"
-        destPort: string; // e.g. "BKK"
-        mode: 'sea' | 'air';
-        cutoffISO: string; // ISO date for cutoff
-        weightKg: number;
-        dimsCm: {
-          l: number;
-          w: number;
-          h: number;
-        }
+    ```ts
+    {
+      originPort: string; // e.g. "AMS"
+      destPort: string; // e.g. "BKK"
+      mode: 'sea' | 'air';
+      cutoffISO: string; // ISO date for cutoff
+      weightKg: number;
+      dimsCm: {
+        l: number;
+        w: number;
+        h: number;
       }
-      ```
+    }
+    ```
 
-    - **200** → `{ price: number; currency: string; etaDays: number }`
+  - **200** → `{ price: number; currency: string; etaDays: number }`
 
 - **Submit intent**
-    - `POST /pools/intent`
-    - **Headers (optional)**: `Idempotency-Key: string`
-    - **Body** same as quote + `userId?: string` (metadata)
-    - **202** → `{ id: string; accepted: true; volumeM3: number }`
+  - `POST /pools/intent`
+  - **Headers (optional)**: `Idempotency-Key: string`
+  - **Body** same as quote + `userId?: string` (metadata)
+  - **202** → `{ id: string; accepted: true; volumeM3: number }`
 
 - **List items in a pool**
-    - `GET /pools/:id/items` → `Item[]`
-    - `GET /pools/:id/items.csv` → CSV download
+  - `GET /pools/:id/items` → `Item[]`
+  - `GET /pools/:id/items.csv` → CSV download
 
 - **Update status** (ops/admin)
-    - `POST /pools/:id/status` with `{ status: 'open'|'closing'|'booked'|'in_transit'|'arrived' }`
+  - `POST /pools/:id/status` with `{ status: 'open'|'closing'|'booked'|'in_transit'|'arrived' }`
 
 ### Events
 
 - `GET /events/recent?limit=50` → recent pool events
-    - Types: `pool_created`, `item_pooled`, `fill_80`, `fill_90`, `fill_100`, `status_changed`
+  - Types: `pool_created`, `item_pooled`, `fill_80`, `fill_90`, `fill_100`, `status_changed`
 
 ### Webhooks
 
@@ -192,21 +192,20 @@ Minimal client to call `/pools/quote` and `/pools/intent`.
 **Usage**
 
 ```html
-
 <script src="/checkout-plugin.bundle.js"></script>
 <script>
-    Containo.init({apiBase: 'http://localhost:4000'});
-    Containo.poolOrder({
-        originPort: 'AMS',
-        destPort: 'BKK',
-        mode: 'sea',
-        cutoffISO: new Date().toISOString(),
-        weightKg: 3,
-        dimsCm: {l: 40, w: 30, h: 25},
-        metadata: {userId: 'demo-user'},
-    })
-            .then(console.log)
-            .catch(console.error);
+  Containo.init({ apiBase: 'http://localhost:4000' });
+  Containo.poolOrder({
+    originPort: 'AMS',
+    destPort: 'BKK',
+    mode: 'sea',
+    cutoffISO: new Date().toISOString(),
+    weightKg: 3,
+    dimsCm: { l: 40, w: 30, h: 25 },
+    metadata: { userId: 'demo-user' },
+  })
+    .then(console.log)
+    .catch(console.error);
 </script>
 ```
 
@@ -252,7 +251,7 @@ See `apps/api/.env.example`. Common ones:
 - Lint + typecheck on pre‑commit
 - Tests via Vitest (CI uses `--passWithNoTests` until specs land)
 
---- 
+---
 
 ## 📄 License
 
