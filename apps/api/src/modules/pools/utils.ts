@@ -1,9 +1,15 @@
 import { getEffectiveRates } from '../pricing/services.js';
+import { createHash } from 'node:crypto';
+import { Input } from './services/submit-intent.js';
 
 export function expectOne<T>(rows: T[], msg: string): T {
   const row = rows[0];
   if (!row) throw new Error(msg);
   return row;
+}
+
+export function toNumber(s: string | number) {
+  return typeof s === 'number' ? s : Number(s);
 }
 
 const AIR_VOLUMETRIC_FACTOR = 167;
@@ -81,4 +87,21 @@ export async function quotePrice(input: QuoteInput): Promise<Quote> {
       serviceFee,
     },
   };
+}
+
+export function fingerprint(i: Input) {
+  const h = createHash('sha256');
+  h.update(
+    JSON.stringify({
+      userId: i.userId,
+      originPort: i.originPort,
+      destPort: i.destPort,
+      mode: i.mode,
+      cutoffISO: i.cutoffISO,
+      weightKg: i.weightKg,
+      dimsCm: i.dimsCm,
+    })
+  );
+
+  return h.digest('hex');
 }
