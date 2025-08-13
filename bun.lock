@@ -43,7 +43,9 @@
       "name": "@containo/web",
       "version": "0.1.0",
       "dependencies": {
-        "@containo/ui": "0.0.0",
+        "@containo/db": "workspace:*",
+        "@containo/types": "workspace:*",
+        "@containo/ui": "workspace:*",
         "@radix-ui/react-label": "^2.1.7",
         "@radix-ui/react-progress": "^1.1.7",
         "@radix-ui/react-select": "^2.2.5",
