@@ -11,6 +11,7 @@ import dateSerializer from './plugins/date-serializer.js';
 import sellerBatchRoutes from './modules/seller-batch/routes.js';
 import warehousePickupRoutes from './modules/warehouse-pickup/routes.js';
 import consolidationRoutes from './modules/consolidation/routes.js';
+import { webhookDeliveryWorker } from './plugins/webhook-delivery-worker.js';
 
 export async function buildServer() {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
@@ -22,9 +23,11 @@ export async function buildServer() {
 
   app.get('/health', async () => ({ ok: true, service: 'containo-api' }));
 
+  app.register(webhookDeliveryWorker);
+
   app.register(consolidationRoutes, { prefix: '/consolidation' });
   app.register(eventsRoutes, { prefix: '/pool-events' });
-  app.register(poolsRoutes, { prefix: '/poolsTable' });
+  app.register(poolsRoutes, { prefix: '/pools' });
   app.register(sellerBatchRoutes, { prefix: '/seller-batches' });
   app.register(sellerBatchRoutes, { prefix: '/seller-batches' });
   app.register(warehousePickupRoutes, { prefix: '/warehouse-pickups' });
