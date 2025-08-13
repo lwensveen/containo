@@ -5,13 +5,13 @@
   "dependencies": {
     "@containo/db": "workspace:*",
     "drizzle-zod": "^0.8.3",
-    "zod": "^4.0.15"
+    "zod": "^4.0.17"
   },
   "devDependencies": {
     "@containo/eslint-config": "workspace:*",
     "@containo/typescript-config": "workspace:*",
-    "@types/node": "^24.2.0",
-    "eslint": "^9.32.0"
+    "@types/node": "^24.2.1",
+    "eslint": "^9.33.0"
   },
   "files": [
     "dist"
