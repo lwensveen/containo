@@ -1,92 +1,92 @@
-export type Mode = 'sea' | 'air';
+import { getPools, init, intent, quote } from './api.js';
+import { ContainoCheckoutElement } from './element.js';
+import { ContainoPoolsSummary } from './elements/pools-summary.js';
 
-export interface QuoteResponse {
-  price: number;
-  currency: string;
-  etaDays: number;
+export * from './types.js';
+export { init, quote, intent, getPools };
+
+let defined = false;
+
+export function defineContainoElements() {
+  if (defined) return;
+  if (!customElements.get('containo-checkout')) {
+    customElements.define('containo-checkout', ContainoCheckoutElement);
+  }
+  if (!customElements.get('containo-pools-summary')) {
+    customElements.define('containo-pools-summary', ContainoPoolsSummary);
+  }
+  defined = true;
 }
 
-export interface IntentResponse {
-  id: string;
-  accepted: true;
-  volumeM3: number;
+export function mount(
+  el: HTMLElement,
+  opts: { apiBase: string; userId?: string } & Partial<{
+    origin: string;
+    dest: string;
+    mode: 'sea' | 'air';
+    cutoffISO: string;
+  }>
+) {
+  defineContainoElements();
+  init({ apiBase: opts.apiBase, defaultUserId: opts.userId });
+
+  const node = document.createElement('containo-checkout');
+  node.setAttribute('api-base', opts.apiBase);
+  if (opts.userId) node.setAttribute('user-id', opts.userId);
+  if (opts.origin) node.setAttribute('origin', opts.origin);
+  if (opts.dest) node.setAttribute('dest', opts.dest);
+  if (opts.mode) node.setAttribute('mode', opts.mode);
+  if (opts.cutoffISO) node.setAttribute('cutoff-iso', opts.cutoffISO);
+
+  el.replaceChildren(node);
 }
 
-export interface PoolOrderOptions {
-  originPort: string;
-  destPort: string;
-  weightKg: number;
-  dimsCm: { l: number; w: number; h: number };
-  mode: Mode;
-  cutoffISO: string;
-  metadata?: Record<string, any>;
-  onQuote?: (quote: QuoteResponse) => void;
-  onIntent?: (intent: IntentResponse) => void;
+export function mountSummary(
+  el: HTMLElement,
+  opts: {
+    apiBase: string;
+    origin?: string;
+    dest?: string;
+    mode?: 'sea' | 'air';
+    limit?: number;
+    minFill?: number; // 0..1
+    refreshSeconds?: number; // 0 = disable
+    hideEmpty?: boolean;
+  }
+) {
+  defineContainoElements();
+
+  const node = document.createElement('containo-pools-summary');
+  node.setAttribute('api-base', opts.apiBase);
+  if (opts.origin) node.setAttribute('origin', opts.origin);
+  if (opts.dest) node.setAttribute('dest', opts.dest);
+  if (opts.mode) node.setAttribute('mode', opts.mode);
+  if (opts.limit != null) node.setAttribute('limit', String(opts.limit));
+  if (opts.minFill != null) node.setAttribute('min-fill', String(opts.minFill));
+  if (opts.refreshSeconds != null)
+    node.setAttribute('refresh-seconds', String(opts.refreshSeconds));
+  if (opts.hideEmpty != null) node.setAttribute('hide-empty', String(opts.hideEmpty));
+
+  el.replaceChildren(node);
 }
 
-let _apiBase = '';
-
-export function init({ apiBase }: { apiBase: string }): void {
-  _apiBase = apiBase.replace(/\/+$/, '');
-  if (typeof window !== 'undefined') {
-    // Expose for <script> tag usage
-    (window as any).Containo = { init, quote, intent, poolOrder };
+declare global {
+  interface Window {
+    Containo?: any;
   }
 }
 
-async function _post<T>(path: string, body: any, headers: Record<string, string> = {}): Promise<T> {
-  if (!_apiBase) throw new Error('Containo not initialized');
-  const resp = await fetch(`${_apiBase}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...headers },
-    body: JSON.stringify(body),
-  });
-  if (!resp.ok) throw new Error(`${path} failed: ${resp.status}`);
-  return resp.json();
+if (typeof window !== 'undefined') {
+  defineContainoElements();
+  window.Containo = {
+    ...(window.Containo || {}),
+    init,
+    quote,
+    intent,
+    getPools,
+    mount,
+    mountCheckout: mount,
+    mountSummary,
+    defineElements: defineContainoElements,
+  };
 }
-
-export async function quote(options: PoolOrderOptions): Promise<QuoteResponse> {
-  const data = await _post<QuoteResponse>('/poolsTable/quote', {
-    originPort: options.originPort,
-    destPort: options.destPort,
-    mode: options.mode,
-    cutoffISO: options.cutoffISO,
-    weightKg: options.weightKg,
-    dimsCm: options.dimsCm,
-  });
-  options.onQuote?.(data);
-  return data;
-}
-
-export async function intent(
-  options: PoolOrderOptions & { idempotencyKey?: string }
-): Promise<IntentResponse> {
-  const headers: Record<string, string> = {};
-  if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
-
-  const data = await _post<IntentResponse>(
-    '/poolsTable/intent',
-    {
-      userId: options.metadata?.userId ?? '',
-      originPort: options.originPort,
-      destPort: options.destPort,
-      mode: options.mode,
-      cutoffISO: options.cutoffISO,
-      weightKg: options.weightKg,
-      dimsCm: options.dimsCm,
-    },
-    headers
-  );
-  options.onIntent?.(data);
-  return data;
-}
-
-export async function poolOrder(
-  opts: PoolOrderOptions & { idempotencyKey?: string }
-): Promise<IntentResponse> {
-  const q = await quote(opts);
-  // UI can use onQuote, or handle q directly
-  return intent(opts);
-}
-
-export default { init, quote, intent, poolOrder };
