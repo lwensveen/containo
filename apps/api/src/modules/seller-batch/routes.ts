@@ -12,6 +12,7 @@ const sellerBatchRoutes: FastifyPluginAsync = async (fastify) => {
   }>(
     '/seller/batches',
     {
+      preHandler: fastify.requireApiKey(['seller.batches:write']),
       schema: {
         body: CreateBatchSchema,
         response: { 201: BatchResponseSchema },
@@ -30,6 +31,7 @@ const sellerBatchRoutes: FastifyPluginAsync = async (fastify) => {
   }>(
     '/seller/batches',
     {
+      preHandler: fastify.requireApiKey(['seller.batches:read']),
       schema: {
         querystring: getBatchesQuerySchema,
         response: { 200: z.array(BatchResponseSchema) },
