@@ -1,13 +1,6 @@
 import { listWebhooks } from './list-webhooks.js';
 import { db, webhookDeliveriesTable } from '@containo/db';
-
-type PoolEventType =
-  | 'pool_created'
-  | 'item_pooled'
-  | 'fill_80'
-  | 'fill_90'
-  | 'fill_100'
-  | 'status_changed';
+import { PoolEventType } from '@containo/types';
 
 export async function enqueueDeliveriesForEvent(event: {
   id: string;

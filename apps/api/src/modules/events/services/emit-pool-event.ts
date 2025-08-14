@@ -1,10 +1,11 @@
 import { expectOne } from '../../pools/utils.js';
 import { db, poolEventsTable } from '@containo/db';
 import { enqueueDeliveriesForEvent } from '../../webhooks/services/enqueue-deliveries-for-event.js';
+import { PoolEventType } from '@containo/types';
 
 export async function emitPoolEvent(input: {
   poolId: string;
-  type: 'pool_created' | 'item_pooled' | 'fill_80' | 'fill_90' | 'fill_100' | 'status_changed';
+  type: PoolEventType;
   payload?: Record<string, unknown>;
 }) {
   const ev = expectOne(
