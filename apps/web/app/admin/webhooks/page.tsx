@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Container } from '@/components/layout/container';
+import { Section } from '@/components/layout/section';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -22,58 +22,37 @@ type Subscription = {
   id: string;
   url: string;
   events: string;
+  secret?: string;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
 };
 
-type Delivery = {
-  id: string;
-  subscriptionId: string;
-  eventId: string;
-  eventType: string;
-  payload: unknown;
-  attemptCount: number;
-  nextAttemptAt: string;
-  lastError?: string | null;
-  responseStatus?: number | null;
-  status: 'pending' | 'delivered' | 'failed';
-  createdAt?: string;
-  updatedAt?: string;
-};
-
-function classNames(...xs: Array<string | false | null | undefined>) {
-  return xs.filter(Boolean).join(' ');
+async function readJsonStrict(res: Response) {
+  const text = await res.text();
+  const ct = res.headers.get('content-type') || '';
+  if (!ct.includes('application/json'))
+    throw new Error(`expected JSON, got ${ct || '(none)'}: ${text.slice(0, 120)}`);
+  return JSON.parse(text);
 }
 
 export default function WebhooksAdminPage() {
   const [subs, setSubs] = useState<Subscription[]>([]);
-  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'delivered' | 'failed'>('all');
   const [q, setQ] = useState('');
 
-  async function readJsonStrict(res: Response) {
-    const text = await res.text();
-    const ct = res.headers.get('content-type') || '';
-    if (!ct.includes('application/json'))
-      throw new Error(`expected JSON, got ${ct || '(none)'}: ${text.slice(0, 120)}`);
-    return JSON.parse(text);
-  }
+  const [openNew, setOpenNew] = useState(false);
+  const [newSub, setNewSub] = useState({ url: '', events: '*', secret: '' });
+  const [busy, setBusy] = useState(false);
 
   async function load() {
     setLoading(true);
     try {
-      const [s, d] = await Promise.all([
-        fetch(`${API}/webhooks/subscriptions`, { cache: 'no-store' }).then(readJsonStrict),
-        fetch(`${API}/webhooks/deliveries`, { cache: 'no-store' }).then(readJsonStrict),
-      ]);
-      setSubs(Array.isArray(s) ? s : []);
-      setDeliveries(Array.isArray(d) ? d : []);
+      const data = await fetch(`${API}/webhooks`, { cache: 'no-store' }).then(readJsonStrict);
+      setSubs(Array.isArray(data) ? data : []);
     } catch (e) {
       console.error(e);
       setSubs([]);
-      setDeliveries([]);
     } finally {
       setLoading(false);
     }
@@ -83,231 +62,169 @@ export default function WebhooksAdminPage() {
     load();
   }, []);
 
-  const filtered = useMemo(() => {
-    return deliveries
-      .filter((d) => (filter === 'all' ? true : d.status === filter))
-      .filter((d) => {
-        if (!q.trim()) return true;
-        const needle = q.trim().toLowerCase();
-        return (
-          d.id.toLowerCase().includes(needle) ||
-          d.eventId.toLowerCase().includes(needle) ||
-          d.eventType.toLowerCase().includes(needle) ||
-          String(d.responseStatus ?? '').includes(needle)
-        );
-      })
-      .sort(
-        (a, b) =>
-          (b.createdAt ? Date.parse(b.createdAt) : 0) - (a.createdAt ? Date.parse(a.createdAt) : 0)
+  const filtered = subs
+    .filter((s) => {
+      const needle = q.trim().toLowerCase();
+      if (!needle) return true;
+      return (
+        s.id.toLowerCase().includes(needle) ||
+        s.url.toLowerCase().includes(needle) ||
+        (s.events || '').toLowerCase().includes(needle)
       );
-  }, [deliveries, filter, q]);
+    })
+    .sort((a, b) => Number(b.isActive) - Number(a.isActive))
+    .sort(
+      (a, b) =>
+        (b.createdAt ? Date.parse(b.createdAt) : 0) - (a.createdAt ? Date.parse(a.createdAt) : 0)
+    );
 
-  return (
-    <main className="mx-auto max-w-6xl p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Webhooks</h1>
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search id / event / status"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="w-[280px]"
-          />
-          <Button variant="outline" onClick={load}>
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Deliveries</CardTitle>
-            <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
-              <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="pending">Pending</TabsTrigger>
-                <TabsTrigger value="delivered">Delivered</TabsTrigger>
-                <TabsTrigger value="failed">Failed</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="border-b bg-slate-50">
-                <tr className="[&>th]:p-2 text-left">
-                  <th>ID</th>
-                  <th>Event</th>
-                  <th>Sub</th>
-                  <th>Status</th>
-                  <th>HTTP</th>
-                  <th>Attempts</th>
-                  <th>Next Attempt</th>
-                  <th>Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td className="p-2" colSpan={8}>
-                      Loading…
-                    </td>
-                  </tr>
-                ) : filtered.length ? (
-                  filtered.map((d) => (
-                    <tr key={d.id} className="border-b align-top">
-                      <td className="p-2 font-mono">{d.id.slice(0, 8)}…</td>
-                      <td className="p-2">
-                        <div className="font-mono">{d.eventType}</div>
-                        <div className="text-xs text-slate-500">evt: {d.eventId.slice(0, 8)}…</div>
-                      </td>
-                      <td className="p-2 font-mono">{d.subscriptionId.slice(0, 8)}…</td>
-                      <td className="p-2">
-                        <Badge
-                          className={classNames(
-                            d.status === 'delivered' && 'bg-emerald-600',
-                            d.status === 'failed' && 'bg-rose-600',
-                            d.status === 'pending' && 'bg-amber-600'
-                          )}
-                        >
-                          {d.status}
-                        </Badge>
-                      </td>
-                      <td className="p-2">{d.responseStatus ?? '—'}</td>
-                      <td className="p-2">{d.attemptCount}</td>
-                      <td className="p-2">
-                        {d.nextAttemptAt ? new Date(d.nextAttemptAt).toLocaleString() : '—'}
-                      </td>
-                      <td className="p-2">
-                        <DeliveryDialog delivery={d} />
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td className="p-2" colSpan={8}>
-                      No deliveries.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Subscriptions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {subs.length ? (
-              subs.map((s) => (
-                <div key={s.id} className="rounded-lg border p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="font-mono text-xs">{s.id.slice(0, 8)}…</div>
-                    <Badge className={s.isActive ? 'bg-emerald-600' : 'bg-slate-500'}>
-                      {s.isActive ? 'active' : 'inactive'}
-                    </Badge>
-                  </div>
-                  <Separator className="my-2" />
-                  <div className="text-xs text-slate-600 break-all">
-                    <div>
-                      <span className="font-semibold">URL:</span> {s.url}
-                    </div>
-                    <div>
-                      <span className="font-semibold">Events:</span> {s.events}
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-sm text-slate-600">No subscriptions.</div>
-            )}
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="text-xs text-slate-500 underline cursor-help">
-                    Tip: seed an echo subscriber for local testing
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  POST a subscription to your API with url ={' '}
-                  <code>http://localhost:3000/api/webhook-echo</code> and secret{' '}
-                  <code>whsec_demo_123</code>.
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
-  );
-}
-
-function DeliveryDialog({ delivery }: { delivery: Delivery }) {
-  const pretty = (v: unknown) => {
+  async function createSubscription() {
+    setBusy(true);
     try {
-      return JSON.stringify(v, null, 2);
-    } catch {
-      return String(v);
+      const res = await fetch(`${API}/webhooks`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(newSub),
+      });
+      if (!res.ok) throw new Error(`Create failed: ${res.status}`);
+      setOpenNew(false);
+      setNewSub({ url: '', events: '*', secret: '' });
+      await load();
+    } catch (e: any) {
+      alert(e?.message ?? String(e));
+    } finally {
+      setBusy(false);
     }
-  };
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          View
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Delivery {delivery.id.slice(0, 8)}…</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-2 text-sm">
-          <div className="grid grid-cols-2 gap-2">
-            <Field label="Event type" value={delivery.eventType} />
-            <Field label="Event id" value={delivery.eventId} mono />
-            <Field label="Subscription" value={delivery.subscriptionId} mono />
-            <Field label="Status" value={delivery.status} />
-            <Field label="HTTP status" value={String(delivery.responseStatus ?? '—')} />
-            <Field label="Attempts" value={String(delivery.attemptCount)} />
-            <Field
-              label="Next attempt"
-              value={
-                delivery.nextAttemptAt ? new Date(delivery.nextAttemptAt).toLocaleString() : '—'
-              }
-            />
-          </div>
-          <Separator />
-          <div>
-            <div className="mb-1 text-xs font-semibold text-slate-500">Payload</div>
-            <pre className="max-h-72 overflow-auto rounded-md bg-slate-50 p-3 text-xs">
-              {pretty(delivery.payload)}
-            </pre>
-          </div>
-          {delivery.lastError && (
-            <>
-              <Separator />
-              <div>
-                <div className="mb-1 text-xs font-semibold text-rose-600">Last error</div>
-                <pre className="max-h-48 overflow-auto rounded-md bg-rose-50 p-3 text-xs text-rose-700">
-                  {delivery.lastError}
-                </pre>
-              </div>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+  }
 
-function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  async function deactivate(id: string) {
+    if (!confirm('Deactivate this webhook subscription?')) return;
+    try {
+      const res = await fetch(`${API}/webhooks/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(`Deactivate failed: ${res.status}`);
+      await load();
+    } catch (e: any) {
+      alert(e?.message ?? String(e));
+    }
+  }
+
   return (
-    <div>
-      <div className="text-[11px] font-semibold text-slate-500">{label}</div>
-      <div className={classNames('truncate', mono && 'font-mono')}>{value}</div>
-    </div>
+    <main>
+      <Section className="py-8">
+        <Container className="max-w-6xl">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h1 className="font-heading text-2xl font-bold">Webhooks</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                placeholder="Search id / url / events"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                className="w-[280px]"
+              />
+              <Button variant="outline" onClick={load}>
+                Refresh
+              </Button>
+              <Dialog open={openNew} onOpenChange={setOpenNew}>
+                <DialogTrigger asChild>
+                  <Button>New subscription</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create subscription</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600">URL</div>
+                      <Input
+                        placeholder="https://example.com/webhooks"
+                        value={newSub.url}
+                        onChange={(e) => setNewSub((s) => ({ ...s, url: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600">Events</div>
+                      <Input
+                        placeholder="* or comma-separated like pool_created,item_pooled"
+                        value={newSub.events}
+                        onChange={(e) => setNewSub((s) => ({ ...s, events: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-slate-600">Secret</div>
+                      <Input
+                        placeholder="whsec_xxx..."
+                        value={newSub.secret}
+                        onChange={(e) => setNewSub((s) => ({ ...s, secret: e.target.value }))}
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button variant="outline" onClick={() => setOpenNew(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={createSubscription} disabled={busy}>
+                        {busy ? 'Creating…' : 'Create'}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+
+          <Card className="border-slate-200/70">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="font-heading">Subscriptions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {loading ? (
+                <div className="text-sm text-slate-600">Loading…</div>
+              ) : filtered.length ? (
+                filtered.map((s) => (
+                  <div key={s.id} className="rounded-lg border p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="font-mono text-xs">{s.id.slice(0, 8)}…</div>
+                      <Badge className={s.isActive ? 'bg-emerald-600' : 'bg-slate-500'}>
+                        {s.isActive ? 'active' : 'inactive'}
+                      </Badge>
+                    </div>
+                    <Separator className="my-2" />
+                    <div className="break-all text-xs text-slate-600">
+                      <div>
+                        <span className="font-semibold">URL:</span> {s.url}
+                      </div>
+                      <div>
+                        <span className="font-semibold">Events:</span> {s.events}
+                      </div>
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deactivate(s.id)}
+                        disabled={!s.isActive}
+                      >
+                        Deactivate
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-sm text-slate-600">No subscriptions.</div>
+              )}
+
+              <div className="text-xs text-slate-500">
+                Tip: seed a local echo subscriber – POST to your API with:
+                <code className="mx-1 rounded bg-slate-100 px-1.5 py-0.5">url</code>=
+                <code className="rounded bg-slate-100 px-1.5 py-0.5">
+                  http://localhost:3000/api/webhook-echo
+                </code>
+                ,<code className="ml-1 rounded bg-slate-100 px-1.5 py-0.5">secret</code>=
+                <code className="rounded bg-slate-100 px-1.5 py-0.5">whsec_demo_123</code>.
+              </div>
+            </CardContent>
+          </Card>
+        </Container>
+      </Section>
+    </main>
   );
 }
