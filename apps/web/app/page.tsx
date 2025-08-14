@@ -8,7 +8,6 @@ import { Section } from '@/components/layout/section';
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-white to-slate-50">
-      {/* HERO */}
       <Section className="pt-24 pb-16 text-center">
         <Container>
           <h1 className="font-heading mx-auto mt-2 max-w-4xl text-balance text-5xl font-extrabold leading-tight tracking-tight text-slate-900 md:text-6xl lg:text-7xl">
@@ -48,7 +47,6 @@ export default function LandingPage() {
         </Container>
       </Section>
 
-      {/* VALUE POINTS */}
       <Section className="pb-16">
         <Container>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -71,7 +69,6 @@ export default function LandingPage() {
         </Container>
       </Section>
 
-      {/* HOW IT WORKS */}
       <Section>
         <Container>
           <Card className="border-slate-200/70 bg-gradient-to-br from-white to-slate-50 shadow-sm">
@@ -112,7 +109,6 @@ export default function LandingPage() {
         </Container>
       </Section>
 
-      {/* REASSURANCE */}
       <Section className="pb-20 pt-4">
         <Container>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

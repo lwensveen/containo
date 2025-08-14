@@ -26,7 +26,6 @@ import { Estimator } from '@/components/pricing/estimator';
 export default function PricingPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-white to-slate-50">
-      {/* Hero */}
       <Section className="pt-20 pb-10 text-center">
         <Container>
           <Badge className="rounded-full bg-slate-900/5 px-3 py-1 text-slate-700 ring-1 ring-slate-900/10">
@@ -64,7 +63,6 @@ export default function PricingPage() {
         </Container>
       </Section>
 
-      {/* Tiers */}
       <Section className="pt-4 pb-12">
         <Container>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -115,7 +113,6 @@ export default function PricingPage() {
         </Container>
       </Section>
 
-      {/* What affects price */}
       <Section className="py-8">
         <Container>
           <Card className="border-slate-200/70 bg-gradient-to-br from-white to-slate-50 shadow-sm">
@@ -164,7 +161,6 @@ export default function PricingPage() {
         </Container>
       </Section>
 
-      {/* FAQs */}
       <Section className="pb-20 pt-2">
         <Container>
           <Card className="border-slate-200/70 bg-white shadow-sm ring-1 ring-slate-900/5">

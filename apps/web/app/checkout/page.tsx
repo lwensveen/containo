@@ -77,8 +77,6 @@ export default function CheckoutPage() {
         setLog(`Intent failed: ${r.status} ${JSON.stringify(j)}`);
         return;
       }
-      // alternatively use your api helper:
-      // const j = await apiIntent(parsed.data); // (but that doesn't set headers)
       setResult(j);
       setLog('OK');
     } catch (e: any) {

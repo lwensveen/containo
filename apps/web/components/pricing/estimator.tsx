@@ -43,7 +43,6 @@ export function Estimator() {
         <CardTitle className="font-heading text-xl">Quick estimator</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-6 md:grid-cols-2">
-        {/* Inputs */}
         <div className="space-y-4">
           <div>
             <Label className="mb-1 block">Mode</Label>
@@ -109,7 +108,6 @@ export function Estimator() {
           </p>
         </div>
 
-        {/* Results */}
         <div className="space-y-4">
           {(mode === 'sea' || mode === 'both') && (
             <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-900/10">

@@ -24,7 +24,7 @@ const QuoteFormSchema = z.object({
 
 type QuoteForm = z.infer<typeof QuoteFormSchema>;
 
-const AIR_VOL_DIVISOR = 6000; // IATA volumetric divisor (cm)
+const AIR_VOL_DIVISOR = 6000;
 const usd = (n: number) =>
   n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
@@ -51,7 +51,6 @@ export default function QuotePage() {
   const [result, setResult] = useState<QuoteResponse | null>(null);
   const [log, setLog] = useState('');
 
-  // Derived previews
   const volumeM3 = useMemo(
     () => (form.length * form.width * form.height) / 1_000_000,
     [form.length, form.width, form.height]
@@ -113,13 +112,11 @@ export default function QuotePage() {
       <h1 className="font-heading mb-6 text-3xl font-bold tracking-tight">Get a quote</h1>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* LEFT: FORM */}
         <Card className="border-slate-200/70">
           <CardHeader>
             <CardTitle className="font-heading">Shipment details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Route */}
             <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
               <div className="space-y-2">
                 <Label htmlFor="origin">Origin (IATA)</Label>
@@ -152,7 +149,6 @@ export default function QuotePage() {
               </div>
             </div>
 
-            {/* Mode + Cutoff */}
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-2">
                 <Label className="mb-1 block">Mode</Label>
@@ -188,7 +184,6 @@ export default function QuotePage() {
               </div>
             </div>
 
-            {/* Size & weight */}
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
                 <Label>Weight (kg)</Label>
@@ -232,7 +227,6 @@ export default function QuotePage() {
               </div>
             </div>
 
-            {/* Derived preview */}
             <div className="grid gap-3 sm:grid-cols-3">
               <Preview label="Volume" value={`${volumeM3.toFixed(2)} m³`} />
               <Preview label="Chargeable (air)" value={`${chargeableAirKg.toFixed(1)} kg`} />
@@ -267,7 +261,6 @@ export default function QuotePage() {
           </CardContent>
         </Card>
 
-        {/* RIGHT: RESULT */}
         <div className="space-y-6">
           <Card className="border-slate-200/70">
             <CardHeader>
@@ -308,8 +301,6 @@ function Preview({ label, value }: { label: string; value: string }) {
 }
 
 function QuoteResult({ result }: { result: QuoteResponse }) {
-  // Adjust to your real shape if different.
-  // Example assumptions: { priceUsd, etaDays, breakdown?: {base, fuel, fees} }
   const total = (result as any).priceUsd ?? (result as any).totalUsd ?? 0;
   const eta = (result as any).etaDays ?? (result as any).eta_days ?? (result as any).eta ?? null;
 
