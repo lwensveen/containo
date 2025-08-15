@@ -17,6 +17,7 @@ export const itemStatusEnum = pgEnum('item_status_enum', [
   'pay_pending',
   'pending',
   'pooled',
+  'refunded',
   'shipped',
 ]);
 
@@ -29,6 +30,8 @@ export const poolEventEnum = pgEnum('pool_event_enum', [
   'fill_80',
   'fill_90',
   'item_pooled',
+  'payment_received',
+  'payment_refunded',
   'pool_created',
   'status_changed',
 ]);

@@ -23,6 +23,8 @@ export const PoolEventTypeEnum = z.enum([
   'fill_80',
   'fill_90',
   'item_pooled',
+  'payment_received',
+  'payment_refunded',
   'pool_created',
   'status_changed',
 ]);

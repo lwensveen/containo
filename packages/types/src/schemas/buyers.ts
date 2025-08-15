@@ -2,7 +2,7 @@ import { z } from 'zod/v4';
 
 export const BuyerShipmentSchema = z.object({
   itemId: z.string().uuid(),
-  status: z.enum(['pending', 'pooled', 'pay_pending', 'paid', 'shipped', 'delivered']),
+  status: z.enum(['pending', 'pooled', 'pay_pending', 'paid', 'shipped', 'delivered', 'refunded']),
   weightKg: z.number(),
   volumeM3: z.number(),
   length: z.number(),

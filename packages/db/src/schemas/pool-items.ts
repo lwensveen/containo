@@ -13,6 +13,7 @@ export const poolItemsTable = pgTable(
     originPort: text('origin_port').notNull(),
     destPort: text('dest_port').notNull(),
     mode: modeEnum('mode').notNull(),
+    stripeSessionId: text('stripe_session_id'),
     idempotencyKey: text('idempotency_key'),
     cutoffISO: text('cutoff_iso').notNull(),
     weightKg: numeric('weight_kg').notNull(),
