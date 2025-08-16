@@ -54,3 +54,22 @@ export const DeliveriesListQuerySchema = z.object({
 });
 
 export const DeliveriesListResponseSchema = z.array(WebhookDeliveryPublicSchema);
+
+export const WebhookEventTypeEnum = z.enum([
+  'pool_created',
+  'item_pooled',
+  'fill_80',
+  'fill_90',
+  'fill_100',
+  'status_changed',
+  'booking_requested',
+  'booking_confirmed',
+  'booking_failed',
+  'customs_ready',
+  'payment_received',
+  'payment_refunded',
+  'pickup_requested',
+  'pickup_scheduled',
+  'pickup_picked_up',
+  'pickup_canceled',
+]);

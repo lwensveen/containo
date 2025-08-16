@@ -2,6 +2,8 @@ export * from './api-keys.js';
 export * from './buyers.js';
 export * from './customs.js';
 export * from './intents.js';
+export * from './pickup-events.js';
+export * from './pickups.js';
 export * from './pool-events.js';
 export * from './pool-items.js';
 export * from './pools.js';
