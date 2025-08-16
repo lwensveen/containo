@@ -6,7 +6,7 @@ let DEFAULT_USER_ID: string | undefined;
 
 export function init(opts: InitOptions) {
   API_BASE = opts.apiBase.replace(/\/+$/, '');
-  PUBLISHABLE_KEY = opts.publishableKey;
+  PUBLISHABLE_KEY = opts.apiKey ?? opts.publishableKey;
   DEFAULT_USER_ID = opts.defaultUserId;
 }
 

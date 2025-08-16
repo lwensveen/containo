@@ -20,7 +20,7 @@ export function defineContainoElements() {
 
 export function mount(
   el: HTMLElement,
-  opts: { apiBase: string; userId?: string } & Partial<{
+  opts: { apiBase: string; userId?: string; apiKey?: string } & Partial<{
     origin: string;
     dest: string;
     mode: 'sea' | 'air';
@@ -28,10 +28,11 @@ export function mount(
   }>
 ) {
   defineContainoElements();
-  init({ apiBase: opts.apiBase, defaultUserId: opts.userId });
+  init({ apiBase: opts.apiBase, defaultUserId: opts.userId, apiKey: opts.apiKey });
 
   const node = document.createElement('containo-checkout');
   node.setAttribute('api-base', opts.apiBase);
+  if (opts.apiKey) node.setAttribute('api-key', opts.apiKey);
   if (opts.userId) node.setAttribute('user-id', opts.userId);
   if (opts.origin) node.setAttribute('origin', opts.origin);
   if (opts.dest) node.setAttribute('dest', opts.dest);

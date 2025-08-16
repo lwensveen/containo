@@ -1,5 +1,5 @@
 import { Mode, Pool, PoolOrderOptions } from './types.js';
-import { getPools, intent, quote } from './api.js';
+import { getPools, init, intent, quote } from './api.js';
 
 const css = ` 
 :host{all:initial}
@@ -99,7 +99,9 @@ template.innerHTML = `<style>${css}</style>
 export class ContainoCheckoutElement extends HTMLElement {
   #shadow: ShadowRoot;
   #apiBase = '';
+  #apiKey: string | undefined;
   #userId: string | undefined;
+  #interval: any;
 
   constructor() {
     super();
@@ -108,22 +110,33 @@ export class ContainoCheckoutElement extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['api-base', 'user-id', 'origin', 'dest', 'mode', 'cutoff-iso'];
+    return [
+      'api-base',
+      'api-key',
+      'publishable-key',
+      'user-id',
+      'origin',
+      'dest',
+      'mode',
+      'cutoff-iso',
+    ];
   }
 
   attributeChangedCallback(name: string, _old: string, val: string) {
     if (name === 'api-base') this.#apiBase = val;
+    if (name === 'api-key' || name === 'publishable-key') this.#apiKey = val || undefined;
     if (name === 'user-id') this.#userId = val;
 
     const byId = (id: string) => this.#shadow.getElementById(id) as HTMLInputElement | null;
-
     if (name === 'origin') byId('origin')?.setAttribute('value', (val || '').toUpperCase());
     if (name === 'dest') byId('dest')?.setAttribute('value', (val || '').toUpperCase());
-
     if (name === 'mode')
       (this.#shadow.getElementById('mode') as HTMLSelectElement | null)?.setAttribute('value', val);
-
     if (name === 'cutoff-iso') byId('cutoff')?.setAttribute('value', val);
+
+    if (['api-base', 'api-key', 'publishable-key', 'user-id'].includes(name)) {
+      this.#ensureInit();
+    }
   }
 
   connectedCallback() {
@@ -134,9 +147,18 @@ export class ContainoCheckoutElement extends HTMLElement {
     (this.#shadow.getElementById('btn-intent') as HTMLButtonElement).onclick = () =>
       this.#onIntent();
 
+    this.#ensureInit();
     this.#loadPools();
-    const interval = setInterval(() => this.#loadPools(), 30_000);
-    this.addEventListener('disconnect', () => clearInterval(interval));
+    this.#interval = setInterval(() => this.#loadPools(), 30_000);
+  }
+
+  disconnectedCallback() {
+    if (this.#interval) clearInterval(this.#interval);
+  }
+
+  #ensureInit() {
+    if (!this.#apiBase) return;
+    init({ apiBase: this.#apiBase, apiKey: this.#apiKey, defaultUserId: this.#userId });
   }
 
   #setStatus(txt: string) {
@@ -148,9 +170,8 @@ export class ContainoCheckoutElement extends HTMLElement {
     el.textContent = txt;
   }
 
-  #opts(): PoolOrderOptions {
+  #opts(): PoolOrderOptions & { idempotencyKey?: string } {
     const v = (id: string) => (this.#shadow.getElementById(id) as HTMLInputElement).value;
-
     return {
       originPort: v('origin').toUpperCase(),
       destPort: v('dest').toUpperCase(),
@@ -158,7 +179,7 @@ export class ContainoCheckoutElement extends HTMLElement {
       cutoffISO: v('cutoff'),
       weightKg: Number(v('w')),
       dimsCm: { length: Number(v('l')), width: Number(v('wi')), height: Number(v('h')) },
-      idempotencyKey: crypto?.randomUUID?.() ?? String(Date.now()),
+      idempotencyKey: (globalThis as any)?.crypto?.randomUUID?.() ?? String(Date.now()),
       metadata: { userId: this.#userId },
     };
   }
@@ -166,11 +187,9 @@ export class ContainoCheckoutElement extends HTMLElement {
   async #onQuote() {
     try {
       this.#setStatus('Quoting…');
-
       const q = await quote(this.#opts());
-      const total = q.price ?? (q as any).userPrice ?? 0;
-      const eta = q.etaDays ?? (q as any).eta ?? null;
-
+      const total = (q as any).userPrice ?? q.price ?? 0;
+      const eta = (q as any).eta ?? q.etaDays ?? null;
       this.#setResult(`Total: $${Number(total).toFixed(0)}${eta ? ` • ETA: ${eta} days` : ''}`);
       this.dispatchEvent(new CustomEvent('containo:quote', { detail: q }));
       this.#setStatus('OK');
@@ -183,9 +202,7 @@ export class ContainoCheckoutElement extends HTMLElement {
   async #onIntent() {
     try {
       this.#setStatus('Reserving…');
-
       const r = await intent(this.#opts());
-
       this.#setResult(`Reserved. Intent id: ${r.id} • Volume: ${r.volumeM3} m³`);
       this.dispatchEvent(new CustomEvent('containo:intent', { detail: r }));
       this.#setStatus('OK');

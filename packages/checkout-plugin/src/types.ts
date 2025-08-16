@@ -37,6 +37,7 @@ export interface PoolOrderOptions {
 
 export interface InitOptions {
   apiBase: string;
+  apiKey?: string;
   publishableKey?: string;
   defaultUserId?: string;
 }
