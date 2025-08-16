@@ -1,10 +1,10 @@
 import { listWebhooks } from './list-webhooks.js';
 import { db, webhookDeliveriesTable } from '@containo/db';
-import { PoolEventType } from '@containo/types';
+import type { WebhookEventType } from '@containo/types';
 
 export async function enqueueDeliveriesForEvent(event: {
   id: string;
-  type: PoolEventType;
+  type: WebhookEventType;
   payload: Record<string, unknown>;
 }) {
   const subs = await listWebhooks();

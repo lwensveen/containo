@@ -18,6 +18,7 @@ import customsRoutes from './modules/customs/routes.js';
 import { fastifyRawBody } from 'fastify-raw-body';
 import paymentsRoutes from './modules/payments/routes.js';
 import rateLimit from '@fastify/rate-limit';
+import pickupsRoutes from './modules/pickups/routes.js';
 
 export async function buildServer() {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
@@ -48,6 +49,7 @@ export async function buildServer() {
   app.register(customsRoutes, { prefix: '/customs' });
   app.register(eventsRoutes, { prefix: '/pool-events' });
   app.register(paymentsRoutes, { prefix: '/payments' });
+  app.register(pickupsRoutes, { prefix: '/pickups' });
   app.register(poolsRoutes, { prefix: '/pools' });
   app.register(sellerBatchRoutes, { prefix: '/seller-batches' });
   app.register(warehousePickupRoutes, { prefix: '/warehouse-pickups' });
