@@ -20,7 +20,7 @@
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
-    "@types/node": "^24.2.1",
+    "@types/node": "^24.3.0",
     "drizzle-kit": "^0.31.4",
     "typescript": "5.9.2"
   },

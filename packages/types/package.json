@@ -10,7 +10,7 @@
   "devDependencies": {
     "@containo/eslint-config": "workspace:*",
     "@containo/typescript-config": "workspace:*",
-    "@types/node": "^24.2.1",
+    "@types/node": "^24.3.0",
     "eslint": "^9.33.0"
   },
   "files": [
