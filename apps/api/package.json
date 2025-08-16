@@ -34,7 +34,8 @@
     "migrate:generate": "drizzle-kit generate --config ./drizzle.config.ts",
     "migrate:push": "DRIZZLE_LOG=info drizzle-kit push --config ./drizzle.config.ts",
     "start": "node dist/src/main.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "worker:webhooks": "bun run apps/api/src/modules/webhooks/workers/deliver-pending.ts"
   },
   "type": "module"
 }

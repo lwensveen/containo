@@ -11,7 +11,6 @@ import dateSerializer from './plugins/date-serializer.js';
 import sellerBatchRoutes from './modules/seller-batch/routes.js';
 import warehousePickupRoutes from './modules/warehouse-pickup/routes.js';
 import consolidationRoutes from './modules/consolidation/routes.js';
-import { webhookDeliveryWorker } from './plugins/webhook-delivery-worker.js';
 import { apiKeyAuthPlugin } from './plugins/api-key-auth.js';
 import buyersRoutes from './modules/buyers/routes.js';
 import customsRoutes from './modules/customs/routes.js';
@@ -27,7 +26,12 @@ export async function buildServer() {
   app.setSerializerCompiler(serializerCompiler);
 
   app.register(sensible);
-  app.register(cors, { origin: true });
+  app.register(cors, {
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['content-type', 'authorization', 'x-admin-token', 'idempotency-key'],
+    credentials: true,
+  });
   app.register(swaggerPlugin);
   app.register(dateSerializer);
   app.register(apiKeyAuthPlugin);
@@ -41,8 +45,6 @@ export async function buildServer() {
   app.register(rateLimit, { global: false });
 
   app.get('/health', async () => ({ ok: true, service: 'containo-api' }));
-
-  app.register(webhookDeliveryWorker);
 
   app.register(buyersRoutes, { prefix: '/buyers' });
   app.register(consolidationRoutes, { prefix: '/consolidation' });
