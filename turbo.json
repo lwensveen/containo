@@ -14,6 +14,30 @@
         ".next/**",
         "!.next/cache/**",
         "dist/**"
+      ],
+      "env": [
+        "ADMIN_TOKEN",
+        "AIR_PRICE_PER_KG",
+        "API_URL",
+        "BETTER_AUTH_URL",
+        "BOOKING_HTTP_AUTH",
+        "BOOKING_HTTP_URL",
+        "COURIER_SANDBOX_API_KEY",
+        "COURIER_SANDBOX_URL",
+        "DATABASE_URL",
+        "EMAIL_OTP_API_SECRET",
+        "FACEBOOK_CLIENT_ID",
+        "FACEBOOK_CLIENT_SECRET",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "POOL_SEA_CAP_M3",
+        "PORT",
+        "REDIS_TOKEN",
+        "REDIS_URL",
+        "SEA_PRICE_PER_CBM",
+        "SERVICE_FEE_PER_ORDER",
+        "TURNSTILE_SECRET_KEY",
+        "WEBHOOK_MAX_ATTEMPTS"
       ]
     },
     "lint": {
