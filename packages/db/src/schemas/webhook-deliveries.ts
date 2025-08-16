@@ -14,7 +14,7 @@ export const webhookDeliveriesTable = pgTable(
     eventType: webhookEventTypeEnum('event_type').notNull(),
     payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
     attemptCount: integer('attempt_count').notNull().default(0),
-    nextAttemptAt: timestamp('next_attempt_at', { withTimezone: false }).notNull().defaultNow(),
+    nextAttemptAt: timestamp('next_attempt_at', { withTimezone: false }).defaultNow(),
     lastError: text('last_error'),
     responseStatus: integer('response_status'),
     status: deliveryStatusEnum('status').notNull().default('pending'),
