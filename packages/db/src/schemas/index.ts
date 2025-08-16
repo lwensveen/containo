@@ -7,6 +7,8 @@ export * from './customs.js';
 export * from './intents.js';
 export * from './lane-rates.js';
 export * from './payments.js';
+export * from './pickup-events.js';
+export * from './pickups.js';
 export * from './pool-events.js';
 export * from './pool-items.js';
 export * from './pools.js';

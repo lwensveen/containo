@@ -1,5 +1,5 @@
 import { index, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { deliveryStatusEnum, poolEventEnum } from '../enums.js';
+import { deliveryStatusEnum, webhookEventTypeEnum } from '../enums.js';
 import { createTimestampColumn } from '../utils.js';
 import { webhookSubscriptionsTable } from './webhook-subscriptions.js';
 
@@ -11,7 +11,7 @@ export const webhookDeliveriesTable = pgTable(
       .notNull()
       .references(() => webhookSubscriptionsTable.id),
     eventId: uuid('event_id').notNull(),
-    eventType: poolEventEnum('event_type').notNull(),
+    eventType: webhookEventTypeEnum('event_type').notNull(),
     payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
     attemptCount: integer('attempt_count').notNull().default(0),
     nextAttemptAt: timestamp('next_attempt_at', { withTimezone: false }).notNull().defaultNow(),

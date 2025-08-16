@@ -35,3 +35,36 @@ export const poolEventEnum = pgEnum('pool_event_enum', [
   'pool_created',
   'status_changed',
 ]);
+
+export const webhookEventTypeEnum = pgEnum('webhook_event_type', [
+  'pool_created',
+  'item_pooled',
+  'fill_80',
+  'fill_90',
+  'fill_100',
+  'status_changed',
+  'booking_requested',
+  'booking_confirmed',
+  'booking_failed',
+  'customs_ready',
+  'payment_received',
+  'payment_refunded',
+  'pickup_requested',
+  'pickup_scheduled',
+  'pickup_picked_up',
+  'pickup_canceled',
+]);
+
+export const pickupStatusEnum = pgEnum('pickup_status', [
+  'canceled',
+  'picked_up',
+  'requested',
+  'scheduled',
+]);
+
+export const pickupEventTypeEnum = pgEnum('pickup_event_type', [
+  'pickup_requested',
+  'pickup_scheduled',
+  'pickup_picked_up',
+  'pickup_canceled',
+]);
