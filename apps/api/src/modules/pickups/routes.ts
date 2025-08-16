@@ -28,7 +28,10 @@ function requireAdmin(h: any) {
 export default function pickupsRoutes(app: FastifyInstance) {
   app.post<{ Body: z.infer<typeof PickupCreateSchema>; Reply: z.infer<typeof PickupRecordSchema> }>(
     '/',
-    { schema: { body: PickupCreateSchema, response: { 201: PickupRecordSchema } } },
+    {
+      preHandler: app.requireApiKey(['pickups:write']),
+      schema: { body: PickupCreateSchema, response: { 201: PickupRecordSchema } },
+    },
     async (req, reply) => {
       const row = await createPickup(req.body);
       return reply.code(201).send(row);

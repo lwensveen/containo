@@ -31,6 +31,7 @@ export function poolsRoutes(app: FastifyInstance) {
   }>(
     '/quote',
     {
+      preHandler: app.requireApiKey(['quote:write']),
       schema: {
         body: QuoteInputSchema,
         response: { 200: QuoteSchema },
@@ -47,6 +48,7 @@ export function poolsRoutes(app: FastifyInstance) {
   }>(
     '/intent',
     {
+      preHandler: app.requireApiKey(['intent:write']),
       schema: {
         body: IntentInputSchema,
         response: { 202: IntentResponseSchema },
