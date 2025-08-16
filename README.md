@@ -26,15 +26,6 @@ Monorepo containing:
 
 - **UI consistency**: Tailwind + shadcn UI primitives for quick theming
 
-### Planned / next
-
-- Buyer checkout plugin bundle and demo UI
-- Seller/auction batch API and API keys
-- First‑mile pickup requests
-- Carrier bookings (ocean/air) integrations
-- Customs documentation generation
-- Buyer dashboard for status & tracking
-
 ---
 
 ## Architecture
