@@ -13,7 +13,6 @@ export const IntentSelectCoercedSchema = IntentSelectSchema.extend({
   dimsL: z.coerce.number(),
   dimsW: z.coerce.number(),
   dimsH: z.coerce.number(),
-
   cutoffAt: z.coerce.date(),
   createdAt: z.coerce.date(),
 });
@@ -38,7 +37,7 @@ export const IntentPublicSchema = z.object({
   originPort: z.string().length(3),
   destPort: z.string().length(3),
   mode: z.enum(['sea', 'air']),
-  cutoffAt: z.any(),
+  cutoffAt: z.date(),
   weightKg: z.coerce.number(),
   dimsL: z.coerce.number(),
   dimsW: z.coerce.number(),
@@ -57,7 +56,7 @@ export const IntentInputSchema = z.object({
   originPort: z.string().length(3),
   destPort: z.string().length(3),
   mode: z.enum(['sea', 'air']),
-  cutoffISO: z.string(),
+  cutoffAt: z.date(),
   weightKg: z.coerce.number().positive(),
   dimsCm: z.object({
     length: z.coerce.number().positive(),

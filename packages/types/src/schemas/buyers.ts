@@ -13,7 +13,7 @@ export const BuyerShipmentSchema = z.object({
   originPort: z.string().nullable(),
   destPort: z.string().nullable(),
   mode: z.enum(['sea', 'air']).nullable(),
-  cutoffISO: z.string().nullable(),
+  cutoffAt: z.date().nullable(),
   poolId: z.string().uuid().nullable(),
   poolStatus: z.enum(['open', 'closing', 'booked', 'in_transit', 'arrived']).nullable(),
   usedM3: z.string().nullable(),

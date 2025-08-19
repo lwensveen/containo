@@ -22,6 +22,6 @@ export const PoolItemsByLaneQuerySchema = z.object({
   originPort: z.string().length(3),
   destPort: z.string().length(3),
   mode: z.enum(['sea', 'air']),
-  cutoffISO: z.string(),
+  cutoffAt: z.string(),
   status: z.enum(['pending', 'pooled']).optional(),
 });
