@@ -18,7 +18,7 @@ export interface Pool {
   originPort: string;
   destPort: string;
   mode: Mode;
-  cutoffISO: string;
+  cutoffAt: string;
   capacityM3: string;
   usedM3: string;
   status: 'open' | 'closing' | 'booked' | 'in_transit' | 'arrived';
@@ -30,7 +30,7 @@ export interface PoolOrderOptions {
   weightKg: number;
   dimsCm: { length: number; width: number; height: number };
   mode: Mode;
-  cutoffISO: string;
+  cutoffAt: string;
   idempotencyKey?: string;
   metadata?: Record<string, any>;
 }

@@ -176,7 +176,7 @@ export class ContainoCheckoutElement extends HTMLElement {
       originPort: v('origin').toUpperCase(),
       destPort: v('dest').toUpperCase(),
       mode: (v('mode') as Mode) || 'sea',
-      cutoffISO: v('cutoff'),
+      cutoffAt: v('cutoff'),
       weightKg: Number(v('w')),
       dimsCm: { length: Number(v('l')), width: Number(v('wi')), height: Number(v('h')) },
       idempotencyKey: (globalThis as any)?.crypto?.randomUUID?.() ?? String(Date.now()),
@@ -233,7 +233,7 @@ export class ContainoCheckoutElement extends HTMLElement {
         tr.appendChild(tdMode);
 
         const tdCutoff = document.createElement('td');
-        tdCutoff.textContent = new Date(p.cutoffISO).toLocaleString();
+        tdCutoff.textContent = new Date(p.cutoffAt).toLocaleString();
         tr.appendChild(tdCutoff);
 
         const tdFill = document.createElement('td');

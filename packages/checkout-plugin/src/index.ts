@@ -24,7 +24,7 @@ export function mount(
     origin: string;
     dest: string;
     mode: 'sea' | 'air';
-    cutoffISO: string;
+    cutoffAt: string;
   }>
 ) {
   defineContainoElements();
@@ -37,7 +37,7 @@ export function mount(
   if (opts.origin) node.setAttribute('origin', opts.origin);
   if (opts.dest) node.setAttribute('dest', opts.dest);
   if (opts.mode) node.setAttribute('mode', opts.mode);
-  if (opts.cutoffISO) node.setAttribute('cutoff-iso', opts.cutoffISO);
+  if (opts.cutoffAt) node.setAttribute('cutoff-iso', opts.cutoffAt);
 
   el.replaceChildren(node);
 }

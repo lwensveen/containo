@@ -51,7 +51,7 @@ export async function quote(opts: PoolOrderOptions): Promise<QuoteResponse> {
     originPort: opts.originPort,
     destPort: opts.destPort,
     mode: opts.mode,
-    cutoffISO: opts.cutoffISO,
+    cutoffAt: opts.cutoffAt,
     weightKg: opts.weightKg,
     dimsCm: opts.dimsCm,
   });

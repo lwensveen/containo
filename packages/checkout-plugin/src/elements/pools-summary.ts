@@ -6,7 +6,7 @@ export interface Pool {
   originPort: string;
   destPort: string;
   mode: Mode;
-  cutoffISO: string;
+  cutoffAt: string;
   capacityM3: string;
   usedM3: string;
   status: PoolStatus;
@@ -190,7 +190,7 @@ function mapPool(p: Pool) {
     originPort: p.originPort,
     destPort: p.destPort,
     mode: p.mode,
-    cutoffISO: p.cutoffISO,
+    cutoffAt: p.cutoffAt,
     status: p.status,
     cap,
     used,
@@ -200,7 +200,7 @@ function mapPool(p: Pool) {
 
 function renderItem(p: ReturnType<typeof mapPool>) {
   const pct = Math.round(p.fill * 100);
-  const cutoff = new Date(p.cutoffISO);
+  const cutoff = new Date(p.cutoffAt);
   return `
     <li class="item">
       <div class="row">
