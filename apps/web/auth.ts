@@ -46,7 +46,7 @@ export const auth: any = betterAuth({
     database: { generateId: false },
     crossSubDomainCookies: {
       enabled: true,
-      domain: 'nomyom.com',
+      domain: 'containo.com',
       // additionalCookies: ['custom_cookie'],
     },
   },
