@@ -1,6 +1,6 @@
 import { index, jsonb, pgTable, uuid } from 'drizzle-orm/pg-core';
-import { poolEventEnum } from '../enums.js';
 import { sql } from 'drizzle-orm';
+import { poolEventEnum } from '../enums.js';
 import { createTimestampColumn } from '../utils.js';
 import { poolsTable } from './pools.js';
 
@@ -10,7 +10,7 @@ export const poolEventsTable = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     poolId: uuid('pool_id')
       .notNull()
-      .references(() => poolsTable.id),
+      .references(() => poolsTable.id, { onDelete: 'cascade' }),
     type: poolEventEnum('type').notNull(),
     payload: jsonb('payload')
       .$type<Record<string, unknown>>()
@@ -18,7 +18,8 @@ export const poolEventsTable = pgTable(
       .default(sql`'{}'::jsonb`),
     createdAt: createTimestampColumn('created_at'),
   },
-  (table) => ({
-    poolTimeIdx: index('idx_pool_events_pool_created').on(table.poolId, table.createdAt),
-  })
+  (table) => [
+    index('idx_pool_events_pool_created').on(table.poolId, table.createdAt),
+    index('idx_pool_events_type_created').on(table.type, table.createdAt),
+  ]
 );

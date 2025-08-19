@@ -21,11 +21,5 @@ export const webhookDeliveriesTable = pgTable(
     createdAt: createTimestampColumn('created_at'),
     updatedAt: createTimestampColumn('updated_at', true),
   },
-  (t) => ({
-    pendingIdx: index('idx_webhook_deliveries_pending').on(
-      t.status,
-      t.nextAttemptAt,
-      t.attemptCount
-    ),
-  })
+  (t) => [index('idx_webhook_deliveries_pending').on(t.status, t.nextAttemptAt, t.attemptCount)]
 );

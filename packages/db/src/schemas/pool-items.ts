@@ -1,21 +1,33 @@
-import { index, numeric, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import {
+  index,
+  numeric,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { itemStatusEnum, modeEnum } from '../enums.js';
 import { createTimestampColumn } from '../utils.js';
-import { sql } from 'drizzle-orm';
 import { poolsTable } from './pools.js';
+import { usersTable } from './users/users.js';
 
 export const poolItemsTable = pgTable(
   'pool_items',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id').notNull(),
-    poolId: uuid('pool_id').references(() => poolsTable.id),
-    originPort: text('origin_port').notNull(),
-    destPort: text('dest_port').notNull(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => usersTable.id, { onDelete: 'cascade' }),
+    poolId: uuid('pool_id').references(() => poolsTable.id, { onDelete: 'set null' }),
+    originPort: varchar('origin_port', { length: 3 }).notNull(),
+    destPort: varchar('dest_port', { length: 3 }).notNull(),
     mode: modeEnum('mode').notNull(),
     stripeSessionId: text('stripe_session_id'),
     idempotencyKey: text('idempotency_key'),
-    cutoffISO: text('cutoff_iso').notNull(),
+    cutoffAt: timestamp('cutoff_at', { withTimezone: true }).notNull(),
     weightKg: numeric('weight_kg').notNull(),
     volumeM3: numeric('volume_m3').notNull(),
     length: numeric('l_cm').notNull(),
@@ -25,11 +37,13 @@ export const poolItemsTable = pgTable(
     createdAt: createTimestampColumn('created_at'),
     updatedAt: createTimestampColumn('updated_at', true),
   },
-  (t) => ({
-    pendingLaneIdx: index('idx_items_pending_lane')
-      .on(t.originPort, t.destPort, t.mode, t.cutoffISO)
+  (table) => [
+    index('idx_items_pending_lane')
+      .on(table.originPort, table.destPort, table.mode, table.cutoffAt)
       .where(sql`status = 'pending'`),
-    byPoolIdx: index('idx_items_by_pool').on(t.poolId),
-    uxIntentIdem: uniqueIndex('ux_pool_items_idempotency').on(t.idempotencyKey), // ⬅️ new
-  })
+    index('idx_items_by_pool').on(table.poolId),
+    index('idx_items_user_created').on(table.userId, table.createdAt),
+    uniqueIndex('ux_pool_items_idempotency').on(table.idempotencyKey),
+    uniqueIndex('ux_pool_items_stripe_session').on(table.stripeSessionId),
+  ]
 );

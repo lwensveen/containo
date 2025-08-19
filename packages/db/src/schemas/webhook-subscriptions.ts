@@ -12,7 +12,5 @@ export const webhookSubscriptionsTable = pgTable(
     createdAt: createTimestampColumn('created_at'),
     updatedAt: createTimestampColumn('updated_at', true),
   },
-  (t) => ({
-    activeIdx: index('idx_webhooks_active').on(t.isActive, t.createdAt),
-  })
+  (t) => [index('idx_webhooks_active').on(t.isActive, t.createdAt)]
 );
