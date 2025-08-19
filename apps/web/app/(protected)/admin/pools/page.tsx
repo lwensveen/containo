@@ -71,7 +71,7 @@ export default function AdminPoolsPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="text-sm text-slate-600">
-                    Cutoff: {new Date(p.cutoffISO).toLocaleString()} • Fill: {pct(p)}%
+                    Cutoff: {new Date(p.cutoffAt).toLocaleString()} • Fill: {pct(p)}%
                   </div>
                   <Progress value={pct(p)} className="h-2" />
                   <div className="flex flex-wrap items-center gap-2">

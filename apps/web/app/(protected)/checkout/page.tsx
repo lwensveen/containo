@@ -17,7 +17,7 @@ const IntentInput = z.object({
   originPort: z.string().length(3),
   destPort: z.string().length(3),
   mode: z.enum(['sea', 'air']),
-  cutoffISO: z.string(),
+  cutoffAt: z.string(),
   weightKg: z.coerce.number().positive(),
   dimsCm: z.object({
     length: z.coerce.number().positive(),
@@ -30,7 +30,7 @@ const QuoteInput = z.object({
   originPort: z.string().length(3),
   destPort: z.string().length(3),
   mode: z.enum(['sea', 'air']),
-  cutoffISO: z.string(),
+  cutoffAt: z.string(),
   weightKg: z.coerce.number().positive(),
   dimsCm: z.object({
     length: z.coerce.number().positive(),
@@ -61,7 +61,7 @@ export default function CheckoutPage() {
     originPort: 'AMS',
     destPort: 'BKK',
     mode: 'sea' as 'sea' | 'air',
-    cutoffISO: new Date(Date.now() + 7 * 86400_000).toISOString(),
+    cutoffAt: new Date(Date.now() + 7 * 86400_000).toISOString(),
     weightKg: 120,
     length: 100,
     width: 80,
@@ -96,7 +96,7 @@ export default function CheckoutPage() {
       originPort: o ? o.toUpperCase() : f.originPort,
       destPort: d ? d.toUpperCase() : f.destPort,
       mode: m === 'sea' || m === 'air' ? m : f.mode,
-      cutoffISO: cutoff ?? f.cutoffISO,
+      cutoffAt: cutoff ?? f.cutoffAt,
       weightKg: w ? Number(w) : f.weightKg,
       length: l ? Number(l) : f.length,
       width: wi ? Number(wi) : f.width,
@@ -110,7 +110,7 @@ export default function CheckoutPage() {
       originPort: form.originPort.toUpperCase(),
       destPort: form.destPort.toUpperCase(),
       mode: form.mode,
-      cutoffISO: form.cutoffISO,
+      cutoffAt: form.cutoffAt,
       weightKg: Number(form.weightKg),
       dimsCm: {
         length: Number(form.length),
@@ -164,7 +164,7 @@ export default function CheckoutPage() {
         originPort: body.originPort,
         destPort: body.destPort,
         mode: body.mode,
-        cutoffISO: body.cutoffISO,
+        cutoffAt: body.cutoffAt,
         weightKg: body.weightKg,
         dimsCm: body.dimsCm,
       });
@@ -303,9 +303,9 @@ export default function CheckoutPage() {
                 <Label className="mb-1 block">Cut-off (local)</Label>
                 <Input
                   type="datetime-local"
-                  value={toLocalInputValue(form.cutoffISO)}
+                  value={toLocalInputValue(form.cutoffAt)}
                   onChange={(e) =>
-                    setForm((f) => ({ ...f, cutoffISO: toISOFromLocal(e.target.value) }))
+                    setForm((f) => ({ ...f, cutoffAt: toISOFromLocal(e.target.value) }))
                   }
                 />
               </div>
@@ -356,7 +356,7 @@ export default function CheckoutPage() {
               <Preview label="Chargeable (air)" value={`${chargeableAirKg.toFixed(1)} kg`} />
               <Preview
                 label="Cut-off (UTC)"
-                value={new Date(form.cutoffISO).toISOString().replace('T', ' ').slice(0, 16)}
+                value={new Date(form.cutoffAt).toISOString().replace('T', ' ').slice(0, 16)}
               />
             </div>
 
@@ -399,7 +399,7 @@ export default function CheckoutPage() {
                         {form.originPort} → {form.destPort} ({form.mode})
                       </div>
                       <div className="text-xs text-slate-500">
-                        Cut-off: {new Date(form.cutoffISO).toLocaleString()}
+                        Cut-off: {new Date(form.cutoffAt).toLocaleString()}
                       </div>
                     </div>
                     <div className="font-heading text-3xl">

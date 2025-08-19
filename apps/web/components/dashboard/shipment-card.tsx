@@ -48,7 +48,7 @@ export function ShipmentCard({ s }: { s: Shipment }) {
         <div className="text-sm text-slate-600">
           Item: <span className="font-mono">{s.itemId.slice(0, 8)}…</span> • Created:{' '}
           {new Date(s.createdAt).toLocaleString()}
-          {s.cutoffISO && <> • Cut-off: {new Date(s.cutoffISO).toLocaleString()}</>}
+          {s.cutoffAt && <> • Cut-off: {new Date(s.cutoffAt).toLocaleString()}</>}
           {s.bookingRef && (
             <>
               {' '}

@@ -54,7 +54,7 @@ export async function getPoolItems(poolId: string) {
       originPort: string;
       destPort: string;
       mode: 'sea' | 'air';
-      cutoffISO: string;
+      cutoffAt: string;
       weightKg: string;
       volumeM3: string;
       length: string;

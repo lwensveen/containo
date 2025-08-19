@@ -40,7 +40,7 @@ export type Shipment = {
   originPort: string | null;
   destPort: string | null;
   mode: 'sea' | 'air' | null;
-  cutoffISO: string | null;
+  cutoffAt: string | null;
   poolStatus: 'open' | 'closing' | 'booked' | 'in_transit' | 'arrived' | string | null;
   capacityM3: number | null;
   usedM3: number | null;

@@ -19,8 +19,8 @@ export type Pickup = {
   state?: string | null;
   postcode: string;
   country: string;
-  windowStartISO: string;
-  windowEndISO: string;
+  windowStartAt: string;
+  windowEndAt: string;
   pieces: number;
   totalWeightKg: number;
   notes?: string | null;
@@ -90,8 +90,8 @@ export function PickupsPanel({ userId }: { userId: string }) {
         state: form.state || undefined,
         postcode: form.postcode,
         country: form.country,
-        windowStartISO: toISO(form.windowStart),
-        windowEndISO: toISO(form.windowEnd),
+        windowStartAt: toISO(form.windowStart),
+        windowEndAt: toISO(form.windowEnd),
         pieces: Number(form.pieces),
         totalWeightKg: Number(form.totalWeightKg),
         notes: form.notes || undefined,
@@ -267,8 +267,8 @@ export function PickupsPanel({ userId }: { userId: string }) {
                     {p.address1}, {p.city} {p.postcode}, {p.country}
                   </div>
                   <div className="text-slate-600">
-                    Window: {new Date(p.windowStartISO).toLocaleString()} →{' '}
-                    {new Date(p.windowEndISO).toLocaleString()}
+                    Window: {new Date(p.windowStartAt).toLocaleString()} →{' '}
+                    {new Date(p.windowEndAt).toLocaleString()}
                   </div>
                   <div className="text-slate-600">
                     {p.pieces} pcs • {p.totalWeightKg} kg

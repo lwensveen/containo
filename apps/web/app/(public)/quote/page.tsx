@@ -33,7 +33,7 @@ const QuoteFormSchema = z.object({
   originPort: z.string().trim().length(3, 'Use a 3-letter code'),
   destPort: z.string().trim().length(3, 'Use a 3-letter code'),
   mode: z.enum(['sea', 'air']),
-  cutoffISO: z.string().min(1, 'Select a date & time'),
+  cutoffAt: z.string().min(1, 'Select a date & time'),
   weightKg: z.coerce.number().positive('Enter a positive weight'),
   length: z.coerce.number().positive('Enter a positive number'),
   width: z.coerce.number().positive('Enter a positive number'),
@@ -57,7 +57,7 @@ export default function QuoteMergedPage() {
     originPort: 'AMS',
     destPort: 'BKK',
     mode: 'sea',
-    cutoffISO: new Date(Date.now() + 7 * 86400_000).toISOString(),
+    cutoffAt: new Date(Date.now() + 7 * 86400_000).toISOString(),
     weightKg: 120,
     length: 100,
     width: 80,
@@ -83,7 +83,7 @@ export default function QuoteMergedPage() {
       originPort: form.originPort.toUpperCase(),
       destPort: form.destPort.toUpperCase(),
       mode: form.mode,
-      cutoffISO: form.cutoffISO,
+      cutoffAt: form.cutoffAt,
       weightKg: Number(form.weightKg),
       dimsCm: {
         length: Number(form.length),
@@ -222,13 +222,13 @@ export default function QuoteMergedPage() {
                     <Input
                       id="cutoff"
                       type="datetime-local"
-                      value={toLocalInputValue(form.cutoffISO)}
+                      value={toLocalInputValue(form.cutoffAt)}
                       onChange={(e) =>
-                        setForm((f) => ({ ...f, cutoffISO: toISOFromLocal(e.target.value) }))
+                        setForm((f) => ({ ...f, cutoffAt: toISOFromLocal(e.target.value) }))
                       }
                     />
-                    {errors.cutoffISO && (
-                      <p className="mt-1 text-xs text-red-600">{errors.cutoffISO}</p>
+                    {errors.cutoffAt && (
+                      <p className="mt-1 text-xs text-red-600">{errors.cutoffAt}</p>
                     )}
                   </div>
                 </div>
@@ -283,7 +283,7 @@ export default function QuoteMergedPage() {
                   <Preview label="Chargeable (air)" value={`${chargeableAirKg.toFixed(1)} kg`} />
                   <Preview
                     label="Cut-off (UTC)"
-                    value={new Date(form.cutoffISO).toISOString().replace('T', ' ').slice(0, 16)}
+                    value={new Date(form.cutoffAt).toISOString().replace('T', ' ').slice(0, 16)}
                   />
                 </div>
 
@@ -298,7 +298,7 @@ export default function QuoteMergedPage() {
                         origin: form.originPort,
                         dest: form.destPort,
                         mode: form.mode,
-                        cutoff: form.cutoffISO,
+                        cutoff: form.cutoffAt,
                         w: String(form.weightKg),
                         l: String(form.length),
                         wi: String(form.width),

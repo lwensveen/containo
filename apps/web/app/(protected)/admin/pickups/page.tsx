@@ -16,8 +16,8 @@ type Pickup = {
   city: string;
   postcode: string;
   country: string;
-  windowStartISO: string;
-  windowEndISO: string;
+  windowStartAt: string;
+  windowEndAt: string;
   pieces: number;
   totalWeightKg: number;
   status: 'requested' | 'scheduled' | 'picked_up' | 'canceled';
@@ -110,8 +110,8 @@ export default function AdminPickupsPage() {
               </CardHeader>
               <CardContent className="space-y-2 text-sm text-slate-700">
                 <div className="text-slate-600">
-                  Window: {new Date(p.windowStartISO).toLocaleString()} →{' '}
-                  {new Date(p.windowEndISO).toLocaleString()}
+                  Window: {new Date(p.windowStartAt).toLocaleString()} →{' '}
+                  {new Date(p.windowEndAt).toLocaleString()}
                 </div>
                 <div className="text-slate-600">
                   {p.pieces} pcs • {p.totalWeightKg} kg
