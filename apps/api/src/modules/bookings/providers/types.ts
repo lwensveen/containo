@@ -12,7 +12,7 @@ export interface BookingInputPool {
   mode: 'sea' | 'air';
   originPort: string;
   destPort: string;
-  cutoffISO: string;
+  cutoffAt: Date;
   capacityM3: number;
   usedM3: number;
 }

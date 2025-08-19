@@ -8,14 +8,14 @@ export type Input = {
   originPort: string;
   destPort: string;
   mode: 'sea' | 'air';
-  cutoffISO: string;
+  cutoffAt: Date;
   weightKg: number;
   dimsCm: { length: number; width: number; height: number };
   idempotencyKey?: string | null;
 };
 
 export async function submitIntent(input: Input) {
-  const { userId, originPort, destPort, mode, cutoffISO, weightKg, dimsCm } = input;
+  const { userId, originPort, destPort, mode, cutoffAt, weightKg, dimsCm } = input;
   const volumeM3 = (dimsCm.length * dimsCm.width * dimsCm.height) / 1_000_000;
   const idem = input.idempotencyKey ?? fingerprint(input);
 
@@ -28,7 +28,7 @@ export async function submitIntent(input: Input) {
       originPort,
       destPort,
       mode,
-      cutoffISO,
+      cutoffAt,
       weightKg: String(weightKg),
       volumeM3: String(volumeM3),
       length: String(dimsCm.length),

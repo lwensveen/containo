@@ -55,7 +55,7 @@ export async function bookContainer(
       type: 'booking_requested',
       payload: {
         fill,
-        cutoffISO: pool.cutoffISO,
+        cutoffAt: pool.cutoffAt,
       },
     });
 
@@ -73,7 +73,7 @@ export async function bookContainer(
             originPort: pool.originPort,
             destPort: pool.destPort,
             mode: pool.mode,
-            cutoffISO: pool.cutoffISO,
+            cutoffAt: pool.cutoffAt,
             capacityM3: Number(pool.capacityM3),
             usedM3: Number(pool.usedM3),
           },

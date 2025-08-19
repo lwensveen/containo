@@ -16,7 +16,7 @@ export async function listShipmentsByUser(userId: string, limit = 100) {
       originPort: poolsTable.originPort,
       destPort: poolsTable.destPort,
       mode: poolsTable.mode,
-      cutoffISO: poolsTable.cutoffISO,
+      cutoffAt: poolsTable.cutoffAt,
       poolStatus: poolsTable.status,
       capacityM3: poolsTable.capacityM3,
       usedM3: poolsTable.usedM3,

@@ -12,7 +12,7 @@ export async function emitPickupEvent(args: {
     .values({
       pickupId: args.pickupId,
       type: args.type,
-      payload: args.payload ?? null,
+      ...(args.payload !== undefined ? { payload: args.payload } : {}),
     })
     .returning();
 

@@ -25,7 +25,7 @@ export async function assignPendingItemsToPools(log: FastifyBaseLogger) {
           eq(poolsTable.originPort, it.originPort),
           eq(poolsTable.destPort, it.destPort),
           eq(poolsTable.mode, it.mode),
-          eq(poolsTable.cutoffISO, it.cutoffISO),
+          eq(poolsTable.cutoffAt, it.cutoffAt),
           eq(poolsTable.status, 'open')
         )
       );
@@ -39,7 +39,7 @@ export async function assignPendingItemsToPools(log: FastifyBaseLogger) {
           originPort: it.originPort,
           destPort: it.destPort,
           mode: it.mode,
-          cutoffISO: it.cutoffISO,
+          cutoffAt: it.cutoffAt,
           capacityM3: String(capDefault),
           usedM3: '0',
           status: 'open',
@@ -55,7 +55,7 @@ export async function assignPendingItemsToPools(log: FastifyBaseLogger) {
           originPort: pool.originPort,
           destPort: pool.destPort,
           mode: pool.mode,
-          cutoffISO: pool.cutoffISO,
+          cutoffAt: pool.cutoffAt,
           capacityM3: pool.capacityM3,
         },
       });

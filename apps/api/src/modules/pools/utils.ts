@@ -97,7 +97,7 @@ export function fingerprint(i: Input) {
       originPort: i.originPort,
       destPort: i.destPort,
       mode: i.mode,
-      cutoffISO: i.cutoffISO,
+      cutoffAt: i.cutoffAt,
       weightKg: i.weightKg,
       dimsCm: i.dimsCm,
     })

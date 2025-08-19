@@ -10,9 +10,9 @@ export interface SchedulePickupRequest {
     city: string;
     state?: string | null;
     postcode: string;
-    country: string; // ISO2
-    windowStartISO: string;
-    windowEndISO: string;
+    country: string;
+    windowStartAt: Date;
+    windowEndAt: Date;
     pieces: number;
     totalWeightKg: number;
     notes?: string | null;

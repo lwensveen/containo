@@ -80,7 +80,7 @@ export async function renderReceiptPdf(session: Stripe.Checkout.Session): Promis
             ],
             [
               { text: 'Cut-off', style: 'td' },
-              { text: session.metadata?.cutoffISO ?? '—', style: 'td' },
+              { text: session.metadata?.cutoffAt ?? '—', style: 'td' },
             ],
           ],
         },

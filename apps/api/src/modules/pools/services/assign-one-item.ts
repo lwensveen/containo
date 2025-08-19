@@ -18,7 +18,7 @@ export async function assignOneItemTx(itemId: string): Promise<boolean> {
       WHERE ${poolsTable.originPort} = ${it.originPort}
         AND ${poolsTable.destPort}  = ${it.destPort}
         AND ${poolsTable.mode}      = ${it.mode}
-        AND ${poolsTable.cutoffISO} = ${it.cutoffISO}
+        AND ${poolsTable.cutoffAt} = ${it.cutoffAt}
         AND ${poolsTable.status}    = 'open'
       ORDER BY ${poolsTable.createdAt} ASC
       FOR UPDATE SKIP LOCKED
@@ -37,7 +37,7 @@ export async function assignOneItemTx(itemId: string): Promise<boolean> {
             originPort: it.originPort,
             destPort: it.destPort,
             mode: it.mode,
-            cutoffISO: it.cutoffISO,
+            cutoffAt: it.cutoffAt,
             capacityM3: String(capDefault),
             usedM3: '0',
             status: 'open',
@@ -52,7 +52,7 @@ export async function assignOneItemTx(itemId: string): Promise<boolean> {
             originPort: p.originPort,
             destPort: p.destPort,
             mode: p.mode,
-            cutoffISO: p.cutoffISO,
+            cutoffAt: p.cutoffAt,
             capacityM3: p.capacityM3,
           },
         });
@@ -62,7 +62,7 @@ export async function assignOneItemTx(itemId: string): Promise<boolean> {
           WHERE ${poolsTable.originPort} = ${it.originPort}
             AND ${poolsTable.destPort}  = ${it.destPort}
             AND ${poolsTable.mode}      = ${it.mode}
-            AND ${poolsTable.cutoffISO} = ${it.cutoffISO}
+            AND ${poolsTable.cutoffAt} = ${it.cutoffAt}
             AND ${poolsTable.status}    = 'open'
           ORDER BY ${poolsTable.createdAt} ASC
           FOR UPDATE SKIP LOCKED

@@ -14,17 +14,14 @@ export async function autoBookTick(now = new Date()) {
     .select()
     .from(poolsTable)
     .where(
-      and(
-        inArray(poolsTable.status, ['open', 'closing'] as const),
-        lt(poolsTable.cutoffISO, soon.toISOString())
-      )
+      and(inArray(poolsTable.status, ['open', 'closing'] as const), lt(poolsTable.cutoffAt, soon))
     );
 
   for (const p of candidates) {
     const cap = Number(p.capacityM3) || 0;
     const used = Number(p.usedM3) || 0;
     const fill = cap ? used / cap : 0;
-    const force = new Date(p.cutoffISO) <= forceWindow;
+    const force = new Date(p.cutoffAt) <= forceWindow;
 
     if (fill >= MIN_FILL || force) {
       try {
