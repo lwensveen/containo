@@ -5,17 +5,26 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/layout/container';
+import { authClient } from '@/lib/auth-client';
 
-const navItems = [
+type NavItem = { href: string; label: string };
+const PUBLIC_NAV: NavItem[] = [
   { href: '/', label: 'Home' },
-  { href: '/pricing', label: 'Pricing' },
+  { href: '/quote', label: 'Quote' },
   { href: '/about', label: 'About' },
-  { href: '/admin/webhooks', label: 'Admin' },
+  { href: '/careers', label: 'Careers' },
   { href: '/contact', label: 'Contact' },
 ];
 
+function isActive(pathname: string, href: string) {
+  if (href === '/') return pathname === '/';
+  return pathname === href || pathname.startsWith(href + '/');
+}
+
 export function Header() {
   const pathname = usePathname();
+  const { data: session } = authClient.useSession();
+  const authed = !!session;
 
   return (
     <Container>
@@ -26,27 +35,51 @@ export function Header() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
-            {navItems.map((item) => (
+            {PUBLIC_NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
                   'text-sm font-medium transition-colors hover:text-primary',
-                  pathname === item.href ? 'text-primary' : 'text-muted-foreground'
+                  isActive(pathname, item.href) ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
                 {item.label}
               </Link>
             ))}
+            {authed && (
+              <Link
+                href="/admin"
+                className={cn(
+                  'text-sm font-medium transition-colors hover:text-primary',
+                  isActive(pathname, '/admin') ? 'text-primary' : 'text-muted-foreground'
+                )}
+              >
+                Admin
+              </Link>
+            )}
           </nav>
 
           <div className="flex items-center gap-3">
-            <Button variant="outline" asChild>
-              <Link href="/login">Log in</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/signup">Sign up</Link>
-            </Button>
+            {authed ? (
+              <>
+                <Button variant="outline" asChild>
+                  <Link href="/dashboard">Dashboard</Link>
+                </Button>
+                <Button onClick={() => authClient.signOut()} variant="ghost" className="text-sm">
+                  Log out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" asChild>
+                  <Link href="/login">Log in</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/signup">Sign up</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>

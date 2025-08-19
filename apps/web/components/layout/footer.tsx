@@ -78,7 +78,6 @@ export function Footer() {
                 title="Product"
                 links={[
                   ['/quote', 'Get a quote'],
-                  ['/pricing', 'Pricing'],
                   ['/demo', 'Demo'],
                 ]}
               />
@@ -86,6 +85,7 @@ export function Footer() {
                 title="Company"
                 links={[
                   ['/about', 'About'],
+                  ['/careers', 'Careers'],
                   ['/contact', 'Contact'],
                   ['/admin/pools', 'Ops dashboard'],
                 ]}

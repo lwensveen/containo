@@ -3,6 +3,7 @@ import './globals.css';
 import { Header } from '@/components/layout/header';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import { Footer } from '@/components/layout/footer';
+import CookieConsent from '@/components/cookies/cookie-consent';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const space = Space_Grotesk({ subsets: ['latin'], variable: '--font-space-grotesk' });
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main className="min-h-[calc(100vh-64px)]">{children}</main>
         <Footer />
+        <CookieConsent />
       </body>
     </html>
   );
