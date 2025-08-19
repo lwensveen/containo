@@ -91,7 +91,10 @@ export default function AdminPoolsPage() {
                     >
                       Export CSV
                     </a>
-                    <Link className="text-sm underline" href={`/admin/pools/${p.id}`}>
+                    <Link
+                      className="text-sm underline"
+                      href={`/apps/web/app/(protected)/admin/pools/${p.id}`}
+                    >
                       Details
                     </Link>
                   </div>

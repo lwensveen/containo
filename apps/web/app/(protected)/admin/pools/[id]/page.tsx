@@ -45,7 +45,7 @@ export default async function PoolDetailPage({ params }: { params: Promise<{ id:
               >
                 Export CSV
               </a>
-              <Link className="text-sm underline" href="/admin/pools">
+              <Link className="text-sm underline" href="/apps/web/app/(protected)/admin/pools">
                 Back to pools
               </Link>
             </div>

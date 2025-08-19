@@ -1,7 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { z } from 'zod/v4';
+import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -47,7 +49,13 @@ const toLocalInputValue = (iso: string) => {
 };
 const toISOFromLocal = (local: string) => new Date(local).toISOString();
 
+const AIR_VOL_DIVISOR = 6000;
+
 export default function CheckoutPage() {
+  const params = useSearchParams();
+  const canceled = params.get('canceled') === '1';
+  const { data: session } = authClient.useSession();
+
   const [form, setForm] = useState({
     userId: 'demo-user',
     originPort: 'AMS',
@@ -68,6 +76,34 @@ export default function CheckoutPage() {
   const [busy, setBusy] = useState(false);
   const [payBusy, setPayBusy] = useState(false);
 
+  useEffect(() => {
+    const uid = (session?.user as any)?.id as string | undefined;
+    if (uid) setForm((f) => ({ ...f, userId: uid }));
+  }, [session?.user]);
+
+  useEffect(() => {
+    const o = params.get('origin');
+    const d = params.get('dest');
+    const m = params.get('mode') as 'sea' | 'air' | null;
+    const cutoff = params.get('cutoff');
+    const w = params.get('w');
+    const l = params.get('l');
+    const wi = params.get('wi');
+    const h = params.get('h');
+
+    setForm((f) => ({
+      ...f,
+      originPort: o ? o.toUpperCase() : f.originPort,
+      destPort: d ? d.toUpperCase() : f.destPort,
+      mode: m === 'sea' || m === 'air' ? m : f.mode,
+      cutoffISO: cutoff ?? f.cutoffISO,
+      weightKg: w ? Number(w) : f.weightKg,
+      length: l ? Number(l) : f.length,
+      width: wi ? Number(wi) : f.width,
+      height: h ? Number(h) : f.height,
+    }));
+  }, [params]);
+
   const body = useMemo(
     () => ({
       userId: form.userId,
@@ -85,10 +121,24 @@ export default function CheckoutPage() {
     [form]
   );
 
+  const volumeM3 = useMemo(
+    () => (form.length * form.width * form.height) / 1_000_000,
+    [form.length, form.width, form.height]
+  );
+  const chargeableAirKg = useMemo(() => {
+    const volumetric = (form.length * form.width * form.height) / AIR_VOL_DIVISOR;
+    return Math.max(form.weightKg, volumetric);
+  }, [form.length, form.width, form.height, form.weightKg]);
+
+  function swap() {
+    setForm((f) => ({ ...f, originPort: f.destPort, destPort: f.originPort }));
+  }
+
   async function onIntent() {
     setBusy(true);
     setLog(`Submitting intent… (Idempotency-Key: ${idemKey})`);
     setIntent(null);
+    setQuote(null);
     try {
       const parsed = IntentInput.safeParse(body);
       if (!parsed.success) {
@@ -125,7 +175,6 @@ export default function CheckoutPage() {
         body: JSON.stringify(qIn),
         cache: 'no-store',
       });
-
       const qj = await qr.json();
 
       if (!qr.ok) {
@@ -153,7 +202,6 @@ export default function CheckoutPage() {
     }
     const amountUsd =
       (quote as any)?.userPrice ?? (quote as any)?.priceUsd ?? (quote as any)?.totalUsd ?? 0;
-
     if (!amountUsd || amountUsd <= 0) {
       setLog('Missing or invalid amount. Get a quote first.');
       return;
@@ -185,9 +233,19 @@ export default function CheckoutPage() {
     }
   }
 
+  const readyToPay = !!intent && !!quote;
+
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
       <h1 className="mb-6 font-heading text-3xl font-bold tracking-tight">Checkout</h1>
+
+      {canceled && (
+        <Card className="mb-6 border-amber-200 bg-amber-50">
+          <CardContent className="p-4 text-sm text-amber-900">
+            Payment was canceled. No charge was made. You can adjust details and try again.
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="border-slate-200/70">
@@ -213,14 +271,7 @@ export default function CheckoutPage() {
                   }
                 />
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-10 self-center"
-                onClick={() =>
-                  setForm((f) => ({ ...f, originPort: f.destPort, destPort: f.originPort }))
-                }
-              >
+              <Button type="button" variant="outline" className="h-10 self-center" onClick={swap}>
                 ↔
               </Button>
               <div>
@@ -299,9 +350,19 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {/* quick preview row */}
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Preview label="Volume" value={`${volumeM3.toFixed(2)} m³`} />
+              <Preview label="Chargeable (air)" value={`${chargeableAirKg.toFixed(1)} kg`} />
+              <Preview
+                label="Cut-off (UTC)"
+                value={new Date(form.cutoffISO).toISOString().replace('T', ' ').slice(0, 16)}
+              />
+            </div>
+
             <div className="flex flex-wrap items-center gap-3">
               <Button onClick={onIntent} disabled={busy}>
-                {busy ? 'Submitting…' : 'Reserve space'}
+                {busy ? 'Submitting…' : 'Reserve & fetch price'}
               </Button>
               <Button
                 type="button"
@@ -345,7 +406,7 @@ export default function CheckoutPage() {
                       {usd((quote as any).userPrice ?? (quote as any).priceUsd ?? 0)}
                     </div>
                   </div>
-                  <Button className="w-full" onClick={onPay} disabled={payBusy}>
+                  <Button className="w-full" onClick={onPay} disabled={payBusy || !readyToPay}>
                     {payBusy ? 'Redirecting…' : 'Pay with card'}
                   </Button>
                 </>
@@ -368,5 +429,14 @@ export default function CheckoutPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+function Preview({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-slate-50 p-3 text-sm ring-1 ring-slate-900/10">
+      <div className="text-slate-500">{label}</div>
+      <div className="font-semibold text-slate-900">{value}</div>
+    </div>
   );
 }
