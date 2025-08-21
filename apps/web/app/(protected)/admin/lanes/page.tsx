@@ -1,18 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod/v4';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -65,7 +59,7 @@ export default function AdminLanesPage() {
     'open' | 'closing' | 'booked' | 'in_transit' | 'arrived' | 'all'
   >('open');
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const qp = new URLSearchParams();
@@ -76,11 +70,11 @@ export default function AdminLanesPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filterStatus]);
 
   useEffect(() => {
     load();
-  }, [filterStatus]);
+  }, [load]);
 
   async function onCreate() {
     setBusy(true);

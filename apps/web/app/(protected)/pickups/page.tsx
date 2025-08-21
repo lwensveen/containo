@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,7 +62,7 @@ export default function PickupsPage() {
     notes: '',
   });
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const r = await fetch(`${API}/pickups?userId=${encodeURIComponent(userId)}&limit=200`, {
@@ -75,7 +75,7 @@ export default function PickupsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId]);
 
   async function submit() {
     setLog('Submitting…');
@@ -114,7 +114,7 @@ export default function PickupsPage() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">

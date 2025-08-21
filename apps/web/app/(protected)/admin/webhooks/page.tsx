@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Container } from '@/components/layout/container';
 import { Section } from '@/components/layout/section';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -287,7 +287,7 @@ export default function WebhooksAdminPage() {
     }
   }
 
-  async function loadDeliveries() {
+  const loadDeliveries = useCallback(async () => {
     setLoadingDel(true);
     try {
       const qs = filter === 'all' ? '' : `?status=${encodeURIComponent(filter)}`;
@@ -301,7 +301,7 @@ export default function WebhooksAdminPage() {
     } finally {
       setLoadingDel(false);
     }
-  }
+  }, [filter]);
 
   useEffect(() => {
     loadSubs();

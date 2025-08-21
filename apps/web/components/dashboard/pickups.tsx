@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,7 +60,7 @@ export function PickupsPanel({ userId }: { userId: string }) {
     notes: '',
   });
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const r = await fetch(`${API}/pickups?userId=${encodeURIComponent(userId)}&limit=200`, {
@@ -73,7 +73,7 @@ export function PickupsPanel({ userId }: { userId: string }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId]);
 
   async function submit() {
     setLog('Submitting…');
@@ -113,7 +113,7 @@ export function PickupsPanel({ userId }: { userId: string }) {
 
   useEffect(() => {
     load();
-  }, [userId]);
+  }, [load, userId]);
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
