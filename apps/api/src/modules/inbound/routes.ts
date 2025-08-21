@@ -12,6 +12,7 @@ import { getHubConfig } from './hub-config.js';
 import { db, inboundParcelsTable } from '@containo/db';
 import { and, eq } from 'drizzle-orm';
 import { renderInboundLabelPdf } from './services/render-label.js';
+import { computePriceForInbound, getActiveLaneRate } from '../lanes/services/pricing.js';
 
 const HubKey = process.env.HUB_API_KEY ?? 'dev-hub-key';
 
@@ -186,6 +187,78 @@ export default async function inboundRoutes(app: FastifyInstance) {
           `inline; filename="containo-inbound-label-${hubCode.toUpperCase()}.pdf"`
         )
         .send(pdf);
+    },
+  });
+
+  app.post('/:id/price', {
+    schema: {
+      params: z.object({ id: z.string().uuid() }) as any,
+    },
+    handler: async (req, reply) => {
+      const { id } = req.params as { id: string };
+
+      const inbound = await db.query.inboundParcelsTable.findFirst({
+        where: eq(inboundParcelsTable.id, id),
+        columns: {
+          id: true,
+          originPort: true,
+          destPort: true,
+          mode: true,
+          lengthCm: true,
+          widthCm: true,
+          heightCm: true,
+          weightKg: true,
+          status: true,
+        },
+      });
+
+      if (!inbound) {
+        return reply.code(404).send({ error: 'not_found' });
+      }
+
+      if (!inbound.originPort || !inbound.destPort || !inbound.mode) {
+        return reply.code(400).send({ error: 'lane_missing' });
+      }
+
+      const lengthCm = inbound.lengthCm ?? null;
+      const widthCm = inbound.widthCm ?? null;
+      const heightCm = inbound.heightCm ?? null;
+      const weightKg = inbound.weightKg != null ? Number(inbound.weightKg) : null;
+
+      const haveDims = lengthCm != null && widthCm != null && heightCm != null && weightKg != null;
+
+      if (!haveDims) {
+        return reply.code(400).send({ error: 'not_measured' });
+      }
+
+      const rate = await getActiveLaneRate(
+        {
+          originPort: inbound.originPort,
+          destPort: inbound.destPort,
+          mode: inbound.mode as 'air' | 'sea',
+        },
+        new Date()
+      );
+      if (!rate) {
+        return reply.code(400).send({ error: 'no_rate' });
+      }
+
+      const { amountUsd, breakdown } = computePriceForInbound(
+        {
+          originPort: inbound.originPort,
+          destPort: inbound.destPort,
+          mode: inbound.mode as 'air' | 'sea',
+        },
+        { lengthCm, widthCm, heightCm, weightKg },
+        rate
+      );
+
+      reply.send({
+        inboundId: inbound.id,
+        currency: 'USD',
+        amountUsd,
+        breakdown,
+      });
     },
   });
 }
