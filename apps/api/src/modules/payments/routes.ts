@@ -5,6 +5,7 @@ import { db, poolItemsTable } from '@containo/db';
 import { eq } from 'drizzle-orm';
 import { emitPoolEvent } from '../events/services/emit-pool-event.js';
 import { renderReceiptPdf } from './services/render-receipt.js';
+import { recomputePoolFill } from '../pools/services/recompute-fill.js';
 
 const AdminHeaderSchema = z.object({
   authorization: z.string().optional(),
@@ -220,11 +221,14 @@ export default async function paymentsRoutes(app: FastifyInstance) {
             type: 'status_changed',
             payload: { itemId: row.id, itemStatus: 'refunded' },
           });
+
           await emitPoolEvent({
             poolId: row.poolId,
             type: 'payment_refunded',
             payload: { itemId: row.id, amountUsd: amountUsd ?? (pi.amount_received ?? 0) / 100 },
           });
+
+          await recomputePoolFill(row.poolId);
         }
       }
 

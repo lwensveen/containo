@@ -5,6 +5,7 @@ import { emitInboundEvent } from '../events/services/emit-inbound-event.js';
 import { emitPoolEvent } from '../events/services/emit-pool-event.js';
 import { db, paymentsTable, poolItemsTable } from '@containo/db';
 import { eq } from 'drizzle-orm';
+import { recomputePoolFill } from '../pools/services/recompute-fill.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2025-07-30.basil' });
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -92,6 +93,8 @@ export default async function paymentsWebhook(app: FastifyInstance) {
             type: 'status_changed',
             payload: { itemId: row.id, itemStatus: 'paid' },
           });
+
+          await recomputePoolFill(row.poolId);
 
           await emitPoolEvent({
             poolId: row.poolId,
