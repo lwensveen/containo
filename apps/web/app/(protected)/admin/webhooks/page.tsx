@@ -309,8 +309,7 @@ export default function WebhooksAdminPage() {
 
   useEffect(() => {
     loadDeliveries();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+  }, [filter, loadDeliveries]);
 
   const filteredSubs = useMemo(() => {
     const needle = qSubs.trim().toLowerCase();

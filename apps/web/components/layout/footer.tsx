@@ -93,6 +93,7 @@ export function Footer() {
               <FooterCol
                 title="Resources"
                 links={[
+                  ['/inbound', 'Inbound instructions'],
                   ['/docs', 'API docs'],
                   ['/privacy', 'Privacy'],
                   ['/terms', 'Terms'],

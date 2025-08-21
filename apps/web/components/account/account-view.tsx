@@ -199,7 +199,6 @@ export function AccountView() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Messages */}
             {(msg || err) && (
               <div className="mt-4 rounded-md border p-3 text-sm">
                 {msg ? <span className="text-emerald-700">{msg}</span> : null}
@@ -207,7 +206,6 @@ export function AccountView() {
               </div>
             )}
 
-            {/* Profile */}
             <TabsContent value="profile" className="mt-6">
               <Card className="border-slate-200/70">
                 <CardHeader>
@@ -277,7 +275,6 @@ export function AccountView() {
               </Card>
             </TabsContent>
 
-            {/* Security */}
             <TabsContent value="security" className="mt-6">
               <Card className="border-slate-200/70 max-w-xl">
                 <CardHeader>
@@ -314,7 +311,6 @@ export function AccountView() {
               </Card>
             </TabsContent>
 
-            {/* Connected accounts */}
             <TabsContent value="connections" className="mt-6">
               <Card className="border-slate-200/70">
                 <CardHeader>
@@ -379,7 +375,6 @@ export function AccountView() {
               </Card>
             </TabsContent>
 
-            {/* Danger zone */}
             <TabsContent value="danger" className="mt-6">
               <Card className="border-red-300/60 bg-red-50">
                 <CardHeader>

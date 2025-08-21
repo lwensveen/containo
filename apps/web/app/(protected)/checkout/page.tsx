@@ -350,7 +350,6 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* quick preview row */}
             <div className="grid gap-3 sm:grid-cols-3">
               <Preview label="Volume" value={`${volumeM3.toFixed(2)} m³`} />
               <Preview label="Chargeable (air)" value={`${chargeableAirKg.toFixed(1)} kg`} />

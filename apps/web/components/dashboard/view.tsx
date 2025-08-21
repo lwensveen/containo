@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { ShipmentsPanel } from './shipments';
 import { PickupsPanel } from './pickups';
+import { InboundPanel } from '@/components/dashboard/inbound';
 
 const DEMO_USER = process.env.NEXT_PUBLIC_DEMO_USER_ID ?? '00000000-0000-0000-0000-000000000000';
 
@@ -49,11 +50,16 @@ export function DashboardView() {
       <Tabs defaultValue={initialTab} onValueChange={onTabChange} className="w-full">
         <TabsList className="flex w-full max-w-full flex-wrap gap-2">
           <TabsTrigger value="shipments">Shipments</TabsTrigger>
+          <TabsTrigger value="inbound">Inbound</TabsTrigger>
           <TabsTrigger value="pickups">Pickups</TabsTrigger>
         </TabsList>
 
         <TabsContent value="shipments" className="mt-6">
           <ShipmentsPanel userId={userId} />
+        </TabsContent>
+
+        <TabsContent value="inbound" className="mt-6">
+          <InboundPanel userId={userId} />
         </TabsContent>
 
         <TabsContent value="pickups" className="mt-6">
