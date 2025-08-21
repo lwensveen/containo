@@ -20,6 +20,7 @@ import rateLimit from '@fastify/rate-limit';
 import pickupsRoutes from './modules/pickups/routes.js';
 import inboundRoutes from './modules/inbound/routes.js';
 import lanesRoutes from './modules/lanes/routes.js';
+import poolsCron from './plugins/pools/cron.js';
 
 export async function buildServer() {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
@@ -45,6 +46,9 @@ export async function buildServer() {
     runFirst: true,
   });
   app.register(rateLimit, { global: false });
+  if ((process.env.CRON_POOLS_ENABLED ?? 'true').toLowerCase() === 'true') {
+    await app.register(poolsCron);
+  }
 
   app.get('/health', async () => ({ ok: true, service: 'containo-api' }));
 
