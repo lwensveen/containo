@@ -1,4 +1,4 @@
-import { runOnce } from '../workers/deliver-pending.js';
+import { runOnce } from '../workers/worker.js';
 
 const interval = Number(process.env.WH_POLL_INTERVAL_MS ?? '5000');
 

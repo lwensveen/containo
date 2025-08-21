@@ -89,15 +89,16 @@ export const inboundStatusEnum = pgEnum('inbound_status', [
 ]);
 
 export const inboundEventTypeEnum = pgEnum('inbound_event_type', [
-  'declared',
-  'received',
-  'measured',
-  'staged_to_cfs',
-  'manifested',
-  'departed',
   'canceled',
+  'declared',
+  'departed',
+  'manifested',
+  'measured',
+  'payment_expired',
+  'priority_paid',
   'priority_requested',
   'priority_shipped',
-  'priority_paid',
-  'payment_expired',
+  'received',
+  'staged_to_cfs',
+  'storage_accrued',
 ]);
