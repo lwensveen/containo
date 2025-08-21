@@ -5,7 +5,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export const mockProvider: BookingProvider = {
   async book(req: BookingRequest): Promise<BookingResult> {
-    await sleep(150); // simulate latency
+    await sleep(150);
+
     return {
       bookingRef: `MOCK-${randomUUID().slice(0, 8).toUpperCase()}`,
       carrier: req.pool.mode === 'sea' ? 'MockOcean' : 'MockAir',

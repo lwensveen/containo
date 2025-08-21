@@ -7,7 +7,7 @@ import {
   CustomsDocListResponseSchema,
   CustomsDocRecordSchema,
 } from '@containo/types';
-import { renderCustomsPdf } from './services/generate-pdf.js';
+import { renderCustomsPdf } from './services/generate-customs-pdf.js';
 import { getCustomsDoc, listCustomsDocs } from './utils.js';
 import { createCustomsDoc } from './services/create-customs-doc.js';
 

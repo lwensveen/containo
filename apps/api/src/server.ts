@@ -18,6 +18,8 @@ import { fastifyRawBody } from 'fastify-raw-body';
 import paymentsRoutes from './modules/payments/routes.js';
 import rateLimit from '@fastify/rate-limit';
 import pickupsRoutes from './modules/pickups/routes.js';
+import inboundRoutes from './modules/inbound/routes.js';
+import lanesRoutes from './modules/lanes/routes.js';
 
 export async function buildServer() {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
@@ -50,12 +52,14 @@ export async function buildServer() {
   app.register(consolidationRoutes, { prefix: '/consolidation' });
   app.register(customsRoutes, { prefix: '/customs' });
   app.register(eventsRoutes, { prefix: '/pool-events' });
+  app.register(inboundRoutes, { prefix: '/inbound' });
   app.register(paymentsRoutes, { prefix: '/payments' });
   app.register(pickupsRoutes, { prefix: '/pickups' });
   app.register(poolsRoutes, { prefix: '/pools' });
   app.register(sellerBatchRoutes, { prefix: '/seller-batches' });
   app.register(warehousePickupRoutes, { prefix: '/warehouse-pickups' });
   app.register(webhooksRoutes, { prefix: '/webhooks' });
+  app.register(lanesRoutes, { prefix: '/lanes' });
 
   return app;
 }
