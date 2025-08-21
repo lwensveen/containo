@@ -15,22 +15,27 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-07-30.basil',
 });
 
-const CheckoutBodySchema = z.object({
-  itemId: z.string().uuid(),
-  amountUsd: z.number().positive(),
-  currency: z
-    .string()
-    .length(3)
-    .transform((s) => s.toLowerCase()),
-  description: z.string().max(200).optional(),
-  successUrl: z.string().url().optional(),
-  cancelUrl: z.string().url().optional(),
-});
+const CheckoutBodySchema = z
+  .object({
+    itemId: z.uuid().optional(),
+    inboundId: z.uuid().optional(),
+    amountUsd: z.number().positive(),
+    currency: z
+      .string()
+      .length(3)
+      .transform((s) => s.toLowerCase()),
+    description: z.string().max(200),
+    successUrl: z.url().optional(),
+    cancelUrl: z.url().optional(),
+  })
+  .refine((b) => !!b.itemId || !!b.inboundId, {
+    message: 'Provide itemId or inboundId',
+    path: ['itemId'],
+  });
 
 const CheckoutRespSchema = z.object({ url: z.string().url() });
 
 const RefundBody = z.object({
-  // Prefer session id to avoid extra DB schema
   sessionId: z.string().min(10),
   amountUsd: z.number().positive().optional(),
   reason: z.enum(['requested_by_customer', 'fraudulent', 'duplicate']).optional(),
@@ -46,35 +51,40 @@ export default async function paymentsRoutes(app: FastifyInstance) {
       },
     },
     async (req, reply) => {
-      const { itemId, amountUsd, currency, description, successUrl, cancelUrl } = req.body;
+      const { itemId, inboundId, amountUsd, currency, description, successUrl, cancelUrl } =
+        req.body;
 
-      // Basic sanity: ensure item exists (MVP read)
-      const [it] = await db
-        .select()
-        .from(poolItemsTable)
-        .where(eq(poolItemsTable.id, itemId))
-        .limit(1);
-      if (!it) return reply.notFound('Item not found');
-
-      if (it.status !== 'paid') {
-        const [updated] = await db
-          .update(poolItemsTable)
-          .set({ status: 'pay_pending' })
+      if (itemId) {
+        const [it] = await db
+          .select()
+          .from(poolItemsTable)
           .where(eq(poolItemsTable.id, itemId))
-          .returning();
+          .limit(1);
 
-        if (updated?.poolId) {
-          await emitPoolEvent({
-            poolId: updated.poolId,
-            type: 'status_changed',
-            payload: { itemId: updated.id, itemStatus: 'pay_pending' },
-          });
+        if (!it) return reply.notFound('Item not found');
+
+        if (it.status !== 'paid') {
+          const [updated] = await db
+            .update(poolItemsTable)
+            .set({ status: 'pay_pending' })
+            .where(eq(poolItemsTable.id, itemId))
+            .returning();
+
+          if (updated?.poolId) {
+            await emitPoolEvent({
+              poolId: updated.poolId,
+              type: 'status_changed',
+              payload: { itemId: updated.id, itemStatus: 'pay_pending' },
+            });
+          }
         }
       }
 
-      const base = process.env.PUBLIC_WEB_URL || 'http://localhost:3000';
-      const success_url = successUrl || `${base}/checkout/success?session_id={CHECKOUT_SESSION_ID}`;
-      const cancel_url = cancelUrl || `${base}/checkout/cancel`;
+      const webBase =
+        process.env.WEB_BASE_URL || process.env.PUBLIC_WEB_URL || 'http://localhost:3000';
+      const success_url =
+        successUrl || `${webBase}/(protected)/checkout/success?session_id={CHECKOUT_SESSION_ID}`;
+      const cancel_url = cancelUrl || `${webBase}/(protected)/checkout/cancel`;
 
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
@@ -82,10 +92,9 @@ export default async function paymentsRoutes(app: FastifyInstance) {
           {
             price_data: {
               currency,
-              unit_amount: Math.round(amountUsd * 100), // cents
+              unit_amount: Math.round(amountUsd * 100),
               product_data: {
-                name:
-                  description || `Containo ${it.originPort ?? ''} → ${it.destPort ?? ''}`.trim(),
+                name: description,
               },
             },
             quantity: 1,
@@ -94,7 +103,8 @@ export default async function paymentsRoutes(app: FastifyInstance) {
         success_url,
         cancel_url,
         metadata: {
-          itemId,
+          itemId: itemId ?? '',
+          inboundId: inboundId ?? '',
         },
       });
 
@@ -121,6 +131,7 @@ export default async function paymentsRoutes(app: FastifyInstance) {
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session;
         const itemId = session.metadata?.itemId;
+        const inboundId = session.metadata?.inboundId;
 
         if (itemId) {
           const [row] = await db
@@ -150,9 +161,19 @@ export default async function paymentsRoutes(app: FastifyInstance) {
             }
           }
         }
+
+        // Inbound flow: we only keep metadata for now; hook up events/DB if needed later
+        if (inboundId) {
+          req.log.info({ inboundId, sessionId: session.id }, 'inbound payment completed');
+          // TODO (optional):
+          // - Insert a payment record for inbound
+          // - Emit an inbound event like 'priority_paid'
+          // - Trigger DAP/DDP quotation flow, etc.
+        }
       }
 
       if (event.type === 'checkout.session.expired') {
+        // noop for now; you may want to move item back from pay_pending
       }
 
       return reply.code(200).send({ received: true });
