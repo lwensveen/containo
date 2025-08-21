@@ -1,5 +1,9 @@
 import { z } from 'zod/v4';
-import { InboundDeclareSchema, InboundEventSchema, InboundReceiveSchema, } from '../schemas/index.js';
+import {
+  InboundDeclareSchema,
+  InboundEventSchema,
+  InboundReceiveSchema,
+} from '../schemas/index.js';
 
 export type InboundDeclare = z.infer<typeof InboundDeclareSchema>;
 export type InboundReceive = z.infer<typeof InboundReceiveSchema>;

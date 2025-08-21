@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { InboundEvent } from '@containo/types/dist/types/inbound';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
@@ -70,13 +71,13 @@ type PriceQuote = {
 export function InboundPanel({ userId }: { userId: string }) {
   const [hub, setHub] = useState<HubCode | null>(null);
   const [rows, setRows] = useState<InboundRow[]>([]);
+  const [events, setEvents] = useState<InboundEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyDeclare, setBusyDeclare] = useState(false);
   const [log, setLog] = useState('');
   const [q, setQ] = useState('');
-
-  const [quotes, setQuotes] = useState<Record<string, PriceQuote | { error: string }>>({}); // NEW
-  const [payBusy, setPayBusy] = useState<string | null>(null); // NEW
+  const [quotes, setQuotes] = useState<Record<string, PriceQuote | { error: string }>>({});
+  const [payBusy, setPayBusy] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     originPort: 'AMS',
@@ -99,13 +100,33 @@ export function InboundPanel({ userId }: { userId: string }) {
         cache: 'no-store',
       }).then((r) => r.json());
       setRows(Array.isArray(list) ? list : []);
+
+      const ev = await fetch(
+        `${API}/inbound/events?userId=${encodeURIComponent(userId)}&limit=500`,
+        { cache: 'no-store' }
+      ).then((r) => r.json());
+      setEvents(Array.isArray(ev) ? ev : []);
     } catch (e: any) {
       setLog(String(e?.message ?? e));
       setRows([]);
+      setEvents([]);
     } finally {
       setLoading(false);
     }
   }, [userId]);
+
+  const paidSet = useMemo(() => {
+    const byInbound = new Map<string, InboundEvent>();
+    for (const e of events) {
+      const prev = byInbound.get(e.inboundId);
+      if (!prev || new Date(e.createdAt) > new Date(prev.createdAt)) {
+        byInbound.set(e.inboundId, e);
+      }
+    }
+    return new Set(
+      [...byInbound.entries()].filter(([_, e]) => e.type === 'priority_paid').map(([id]) => id)
+    );
+  }, [events]);
 
   useEffect(() => {
     if (!userId) return;
@@ -341,7 +362,6 @@ export function InboundPanel({ userId }: { userId: string }) {
         </CardContent>
       </Card>
 
-      {/* Listing */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>My inbound parcels</CardTitle>
@@ -401,6 +421,26 @@ export function InboundPanel({ userId }: { userId: string }) {
                           >
                             {r.status.replace(/_/g, ' ')}
                           </Badge>
+                          {r.freeUntilAt && (
+                            <div className="mt-1 text-[11px] text-slate-500">
+                              Free until {new Date(r.freeUntilAt).toLocaleString()}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <Badge
+                            variant={r.status === 'expected' ? 'outline' : undefined}
+                            className="capitalize"
+                          >
+                            {r.status.replace(/_/g, ' ')}
+                          </Badge>
+                          {paidSet.has(r.id) && (
+                            <div className="mt-1">
+                              <span className="rounded bg-emerald-600 px-2 py-0.5 text-[11px] text-white">
+                                Paid
+                              </span>
+                            </div>
+                          )}
                           {r.freeUntilAt && (
                             <div className="mt-1 text-[11px] text-slate-500">
                               Free until {new Date(r.freeUntilAt).toLocaleString()}
