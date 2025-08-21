@@ -167,7 +167,7 @@ export async function updatePool(id: string, patch: z.infer<typeof updatePoolInp
     .set({
       status: data.status ?? undefined,
       bookingRef: data.bookingRef ?? undefined,
-      updatedAt: sql`now()`,
+      updatedAt: new Date(),
     })
     .where(eq(poolsTable.id, id))
     .returning();

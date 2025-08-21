@@ -1,7 +1,8 @@
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { db, inboundEventsTable, inboundParcelsTable, userHubCodesTable } from '@containo/db';
 import type { InboundDeclare, InboundReceive } from '@containo/types';
 import { findNextOpenPoolIdForLane } from '../lanes/services.js';
+import { emitInboundEvent } from '../events/services/emit-inbound-event.js';
 
 function genHubCode(country: string = 'TH') {
   const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -43,7 +44,7 @@ export async function declareInbound(input: InboundDeclare) {
     })
     .returning();
 
-  await db.insert(inboundEventsTable).values({
+  await emitInboundEvent({
     inboundId: row!.id,
     type: 'declared',
     payload: { extTracking: row!.extTracking, sellerName: row!.sellerName },
@@ -112,7 +113,7 @@ export async function hubReceiveOrMeasure(args: InboundReceive) {
         weightKg: args.weightKg != null ? String(args.weightKg) : undefined,
         photoUrl: args.photoUrl ?? undefined,
         poolId: prev.poolId ?? nextPoolId ?? undefined,
-        updatedAt: sql`now()`,
+        updatedAt: new Date(),
       })
       .where(eq(inboundParcelsTable.id, prev.id))
       .returning();
@@ -144,13 +145,13 @@ export async function hubReceiveOrMeasure(args: InboundReceive) {
 export async function requestPriorityShip(inboundId: string, userId: string) {
   const [row] = await db
     .update(inboundParcelsTable)
-    .set({ updatedAt: sql`now()` })
+    .set({ updatedAt: new Date() })
     .where(and(eq(inboundParcelsTable.id, inboundId), eq(inboundParcelsTable.userId, userId)))
     .returning();
 
   if (!row) throw new Error('Inbound not found');
 
-  await db.insert(inboundEventsTable).values({
+  await emitInboundEvent({
     inboundId,
     type: 'priority_requested',
     payload: {},

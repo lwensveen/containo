@@ -9,8 +9,8 @@ import {
 } from './services.js';
 import { InboundDeclareSchema, InboundReceiveSchema } from '@containo/types';
 import { getHubConfig } from './hub-config.js';
-import { db, inboundParcelsTable } from '@containo/db';
-import { and, eq } from 'drizzle-orm';
+import { db, inboundEventsTable, inboundParcelsTable } from '@containo/db';
+import { and, desc, eq } from 'drizzle-orm';
 import { renderInboundLabelPdf } from './services/render-label.js';
 import { computePriceForInbound, getActiveLaneRate } from '../lanes/services/pricing.js';
 
@@ -259,6 +259,33 @@ export default async function inboundRoutes(app: FastifyInstance) {
         amountUsd,
         breakdown,
       });
+    },
+  });
+
+  app.get('/events', {
+    schema: {
+      querystring: z.object({
+        userId: z.string().uuid(),
+        limit: z.number().int().min(1).max(1000).optional(),
+      }) as any,
+    },
+    handler: async (req, reply) => {
+      const { userId, limit = 500 } = req.query as { userId: string; limit?: number };
+
+      const rows = await db
+        .select({
+          id: inboundEventsTable.id,
+          inboundId: inboundEventsTable.inboundId,
+          type: inboundEventsTable.type,
+          createdAt: inboundEventsTable.createdAt,
+        })
+        .from(inboundEventsTable)
+        .innerJoin(inboundParcelsTable, eq(inboundParcelsTable.id, inboundEventsTable.inboundId))
+        .where(eq(inboundParcelsTable.userId, userId))
+        .orderBy(desc(inboundEventsTable.createdAt))
+        .limit(limit);
+
+      reply.send(rows);
     },
   });
 }
