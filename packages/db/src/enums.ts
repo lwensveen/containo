@@ -68,3 +68,24 @@ export const pickupEventTypeEnum = pgEnum('pickup_event_type', [
   'pickup_picked_up',
   'pickup_canceled',
 ]);
+
+export const inboundStatusEnum = pgEnum('inbound_status', [
+  'expected',
+  'received',
+  'staged_to_cfs',
+  'manifested',
+  'departed',
+  'canceled',
+]);
+
+export const inboundEventTypeEnum = pgEnum('inbound_event_type', [
+  'declared',
+  'received',
+  'measured',
+  'staged_to_cfs',
+  'manifested',
+  'departed',
+  'canceled',
+  'priority_requested',
+  'priority_shipped',
+]);
