@@ -49,9 +49,9 @@ export function DashboardView() {
 
       <Tabs defaultValue={initialTab} onValueChange={onTabChange} className="w-full">
         <TabsList className="flex w-full max-w-full flex-wrap gap-2">
-          <TabsTrigger value="shipments">Shipments</TabsTrigger>
-          <TabsTrigger value="inbound">Inbound</TabsTrigger>
-          <TabsTrigger value="pickups">Pickups</TabsTrigger>
+          <TabsTrigger value="shipments">Shipments (Booked & pooled)</TabsTrigger>
+          <TabsTrigger value="inbound">Inbound (Ship-to-hub)</TabsTrigger>
+          <TabsTrigger value="pickups">Pickups (Door collection)</TabsTrigger>
         </TabsList>
 
         <TabsContent value="shipments" className="mt-6">
