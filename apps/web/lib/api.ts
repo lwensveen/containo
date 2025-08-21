@@ -1,5 +1,5 @@
 import { IntentResponse } from '@containo/checkout-plugin';
-import { Pool, QuoteResponse } from '@containo/types';
+import { Pool } from '@containo/types';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
@@ -9,17 +9,59 @@ function withKey(init?: RequestInit): RequestInit {
   return { ...init, headers: h };
 }
 
-export async function quote(input: unknown): Promise<QuoteResponse> {
-  const res = await fetch(`${API}/pools/quote`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-    cache: 'no-store',
+export type LaneQuote = {
+  lane: { originPort: string; destPort: string; mode: 'sea' | 'air' };
+  dims: { L_cm: number; W_cm: number; H_cm: number; pieces: number; volumeM3: number };
+  weight: { actualKg: number; volumetricKg: number; chargeableKg: number; divisor: number };
+  rate: {
+    id: string;
+    priority: number;
+    effectiveFrom: string | null;
+    effectiveTo: string | null;
+    seaPricePerCbm?: number | null;
+    seaMinPrice?: number | null;
+    airPricePerKg?: number | null;
+    airMinPrice?: number | null;
+    serviceFeePerOrder?: number | null;
+  };
+  price: {
+    currency: string;
+    unitPrice: number;
+    subtotal: number;
+    serviceFee: number;
+    total: number;
+    minimumApplied: boolean;
+    basis: 'CBM' | 'chargeable_kg';
+  };
+};
+
+export async function quote(params: {
+  originPort: string;
+  destPort: string;
+  mode: 'sea' | 'air';
+  weightKg: number;
+  dimsL: number;
+  dimsW: number;
+  dimsH: number;
+  pieces?: number;
+}): Promise<LaneQuote> {
+  const qs = new URLSearchParams({
+    originPort: params.originPort.toUpperCase(),
+    destPort: params.destPort.toUpperCase(),
+    mode: params.mode,
+    weightKg: String(params.weightKg),
+    dimsL: String(params.dimsL),
+    dimsW: String(params.dimsW),
+    dimsH: String(params.dimsH),
+    pieces: String(params.pieces ?? 1),
   });
 
-  if (!res.ok) throw new Error(`Quote failed: ${res.status}`);
-
-  return await res.json();
+  const res = await fetch(`${API}/lanes/quote?${qs.toString()}`, { cache: 'no-store' });
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    throw new Error(`Quote failed: ${res.status} ${t}`);
+  }
+  return res.json();
 }
 
 export async function intent(input: unknown): Promise<IntentResponse> {

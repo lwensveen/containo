@@ -39,7 +39,7 @@ type Delivery = {
   nextAttemptAt: string | null;
   lastError?: string | null;
   responseStatus?: number | null;
-  status: 'pending' | 'delivered' | 'failed';
+  status: 'pending' | 'success' | 'failed';
   createdAt?: string;
   updatedAt?: string;
 };
@@ -271,7 +271,7 @@ export default function WebhooksAdminPage() {
   const [qSubs, setQSubs] = useState('');
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loadingDel, setLoadingDel] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'delivered' | 'failed'>('all');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'success' | 'failed'>('all');
   const [qDel, setQDel] = useState('');
 
   async function loadSubs() {
@@ -356,6 +356,30 @@ export default function WebhooksAdminPage() {
     }
   }
 
+  async function retry(id: string) {
+    try {
+      const res = await fetch(`${API}/webhooks/deliveries/${id}/retry`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(`Retry failed: ${res.status} ${t}`);
+      }
+      await loadDeliveries();
+    } catch (e: any) {
+      alert(e?.message ?? String(e));
+    }
+  }
+
+  const statusBadge = (s: Delivery['status']) =>
+    classNames(
+      'capitalize',
+      s === 'success' && 'bg-emerald-600 text-white',
+      s === 'failed' && 'bg-rose-600 text-white',
+      s === 'pending' && 'bg-amber-600 text-white'
+    );
+
   return (
     <main>
       <Section className="py-8">
@@ -439,7 +463,7 @@ export default function WebhooksAdminPage() {
               >
                 <option value="all">All</option>
                 <option value="pending">Pending</option>
-                <option value="delivered">Delivered</option>
+                <option value="success">Success</option>
                 <option value="failed">Failed</option>
               </select>
               <Input
@@ -491,15 +515,7 @@ export default function WebhooksAdminPage() {
                         </td>
                         <td className="p-2 font-mono">{d.subscriptionId.slice(0, 8)}…</td>
                         <td className="p-2">
-                          <Badge
-                            className={classNames(
-                              d.status === 'delivered' && 'bg-emerald-600',
-                              d.status === 'failed' && 'bg-rose-600',
-                              d.status === 'pending' && 'bg-amber-600'
-                            )}
-                          >
-                            {d.status}
-                          </Badge>
+                          <Badge className={statusBadge(d.status)}>{d.status}</Badge>
                         </td>
                         <td className="p-2">{d.responseStatus ?? '—'}</td>
                         <td className="p-2">{d.attemptCount}</td>
@@ -508,6 +524,9 @@ export default function WebhooksAdminPage() {
                         </td>
                         <td className="p-2 space-x-2">
                           <DeliveryDialog delivery={d} />
+                          <Button size="sm" variant="outline" onClick={() => retry(d.id)}>
+                            Retry
+                          </Button>
                           <Button
                             size="sm"
                             variant="outline"

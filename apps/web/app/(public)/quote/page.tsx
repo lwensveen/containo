@@ -25,9 +25,8 @@ import {
 } from '@/components/ui/accordion';
 import { Container } from '@/components/layout/container';
 import { Section } from '@/components/layout/section';
+import { type LaneQuote, quote } from '@/lib/api';
 import { ArrowRight, Plane, Ship } from 'lucide-react';
-import type { QuoteResponse } from '@containo/types';
-import { quote } from '@/lib/api';
 
 const QuoteFormSchema = z.object({
   originPort: z.string().trim().length(3, 'Use a 3-letter code'),
@@ -65,8 +64,11 @@ export default function QuoteMergedPage() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<QuoteResponse | null>(null);
+  const [result, setResult] = useState<LaneQuote | null>(null);
   const [log, setLog] = useState('');
+  const [compare, setCompare] = useState<{ sea?: LaneQuote; air?: LaneQuote } | null>(null);
+  const [busyCompare, setBusyCompare] = useState(false);
+  const [compareErr, setCompareErr] = useState<string | null>(null);
 
   const volumeM3 = useMemo(
     () => (form.length * form.width * form.height) / 1_000_000,
@@ -77,22 +79,6 @@ export default function QuoteMergedPage() {
     const volumetric = (form.length * form.width * form.height) / AIR_VOL_DIVISOR;
     return Math.max(form.weightKg, volumetric);
   }, [form.length, form.width, form.height, form.weightKg]);
-
-  const body = useMemo(
-    () => ({
-      originPort: form.originPort.toUpperCase(),
-      destPort: form.destPort.toUpperCase(),
-      mode: form.mode,
-      cutoffAt: form.cutoffAt,
-      weightKg: Number(form.weightKg),
-      dimsCm: {
-        length: Number(form.length),
-        width: Number(form.width),
-        height: Number(form.height),
-      },
-    }),
-    [form]
-  );
 
   async function onQuote() {
     setBusy(true);
@@ -111,7 +97,16 @@ export default function QuoteMergedPage() {
 
     try {
       setLog('Quoting…');
-      const q = await quote(body);
+      const q = await quote({
+        originPort: form.originPort,
+        destPort: form.destPort,
+        mode: form.mode,
+        weightKg: form.weightKg,
+        dimsL: form.length,
+        dimsW: form.width,
+        dimsH: form.height,
+        pieces: 1,
+      });
       setResult(q);
       setLog('OK');
     } catch (e: any) {
@@ -119,6 +114,59 @@ export default function QuoteMergedPage() {
     } finally {
       setBusy(false);
     }
+  }
+  const makeQuoteParams = (mode: 'sea' | 'air') => ({
+    originPort: form.originPort,
+    destPort: form.destPort,
+    mode,
+    weightKg: form.weightKg,
+    dimsL: form.length,
+    dimsW: form.width,
+    dimsH: form.height,
+    pieces: 1,
+  });
+
+  async function onCompare() {
+    setCompareErr(null);
+    setCompare(null);
+    const parsed = QuoteFormSchema.safeParse(form);
+    if (!parsed.success) {
+      const map: Record<string, string> = {};
+      for (const i of parsed.error.issues) map[i.path.join('.')] = i.message;
+      setErrors(map);
+      return;
+    }
+
+    setBusyCompare(true);
+    try {
+      const [sea, air] = await Promise.all([
+        quote(makeQuoteParams('sea')).catch((e) => {
+          console.warn('Sea quote failed', e);
+          return undefined;
+        }),
+        quote(makeQuoteParams('air')).catch((e) => {
+          console.warn('Air quote failed', e);
+          return undefined;
+        }),
+      ]);
+      if (!sea && !air) throw new Error('Both quotes failed');
+      setCompare({ sea, air });
+      document
+        .getElementById('compare-card')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e: any) {
+      setCompareErr(e?.message ?? 'Compare failed');
+    } finally {
+      setBusyCompare(false);
+    }
+  }
+
+  function useOption(mode: 'sea' | 'air') {
+    const opt = compare?.[mode];
+    if (!opt) return;
+    setForm((f) => ({ ...f, mode }));
+    setResult(opt);
+    document.getElementById('quote-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   const swap = () => setForm((f) => ({ ...f, originPort: f.destPort, destPort: f.originPort }));
@@ -287,10 +335,21 @@ export default function QuoteMergedPage() {
                   />
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <Button onClick={onQuote} disabled={busy}>
                     {busy ? 'Quoting…' : 'Get quote'}
                   </Button>
+
+                  <Button
+                    variant="secondary"
+                    onClick={onCompare}
+                    disabled={busy || busyCompare}
+                    aria-label="Compare air vs sea"
+                    title="Compare air vs sea"
+                  >
+                    {busyCompare ? 'Comparing…' : 'Compare air vs sea'}
+                  </Button>
+
                   <Link
                     href={{
                       pathname: '/checkout',
@@ -323,6 +382,43 @@ export default function QuoteMergedPage() {
                   ) : (
                     <p className="text-sm text-slate-600">
                       Fill in details and click <b>Get quote</b>.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card id="compare-card" className="border-slate-200/70">
+                <CardHeader>
+                  <CardTitle className="font-heading">Compare air vs sea</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Button onClick={onCompare} disabled={busyCompare}>
+                      {busyCompare ? 'Comparing…' : 'Compare'}
+                    </Button>
+                    {compareErr && <div className="text-xs text-rose-600">{compareErr}</div>}
+                  </div>
+
+                  {compare && (compare.sea || compare.air) ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <CompareOption
+                        label="Sea • best value"
+                        mode="sea"
+                        quote={compare.sea}
+                        cheapest={isCheapest(compare, 'sea')}
+                        onUse={() => useOption('sea')}
+                      />
+                      <CompareOption
+                        label="Air • fastest"
+                        mode="air"
+                        quote={compare.air}
+                        cheapest={isCheapest(compare, 'air')}
+                        onUse={() => useOption('air')}
+                      />
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-600">
+                      Run a comparison to see both options side-by-side.
                     </p>
                   )}
                 </CardContent>
@@ -508,47 +604,166 @@ function Preview({ label, value }: { label: string; value: string }) {
   );
 }
 
-function QuoteResult({ result }: { result: QuoteResponse }) {
-  const total = (result as any).priceUsd ?? (result as any).totalUsd ?? 0;
-  const eta = (result as any).etaDays ?? (result as any).eta_days ?? (result as any).eta ?? null;
-  const breakdown = (result as any).breakdown ?? null;
+function QuoteResult({ result }: { result: LaneQuote }) {
+  const { lane, price, weight, dims, rate } = result;
+  const basisHint = price.basis === 'CBM' ? 'per m³' : 'per chargeable kg';
 
   return (
     <div className="space-y-3">
       <div className="flex items-baseline justify-between">
         <div>
-          <div className="font-heading text-lg">Total</div>
-          <div className="text-xs text-slate-500">Exact at booking; no hidden fees</div>
-        </div>
-        <div className="font-heading text-3xl">{usd(Number(total) || 0)}</div>
-      </div>
-
-      {eta !== null && (
-        <div className="rounded-lg bg-slate-50 p-3 text-sm ring-1 ring-slate-900/10">
-          <div className="text-slate-500">Estimated transit</div>
-          <div className="font-semibold text-slate-900">
-            {typeof eta === 'number' ? `${eta} days` : String(eta)}
+          <div className="font-heading text-lg">
+            {lane.originPort} → {lane.destPort} ({lane.mode})
+          </div>
+          <div className="text-xs text-slate-500">
+            {price.minimumApplied ? 'Minimum applied' : 'Usage-based'}
           </div>
         </div>
-      )}
+        <div className="font-heading text-3xl">{usd(price.total)}</div>
+      </div>
 
-      {breakdown && (
-        <div className="rounded-lg bg-white p-3 text-sm ring-1 ring-slate-900/10">
-          <div className="mb-1 font-medium">Breakdown</div>
-          <ul className="space-y-1">
-            {Object.entries(breakdown).map(([k, v]) => (
-              <li key={k} className="flex justify-between">
-                <span className="capitalize text-slate-600">{k.replace(/_/g, ' ')}</span>
-                <span className="font-medium">{usd(Number(v) || 0)}</span>
-              </li>
-            ))}
-          </ul>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Preview
+          label={price.basis === 'CBM' ? 'Volume (m³)' : 'Chargeable (kg)'}
+          value={price.basis === 'CBM' ? dims.volumeM3.toFixed(3) : weight.chargeableKg.toFixed(1)}
+        />
+        <Preview label={`Unit price (${basisHint})`} value={usd(price.unitPrice)} />
+        <Preview label="Service fee" value={usd(price.serviceFee)} />
+      </div>
+
+      <div className="rounded-lg bg-white p-3 text-sm ring-1 ring-slate-900/10">
+        <div className="mb-1 font-medium">Breakdown</div>
+        <ul className="space-y-1">
+          <li className="flex justify-between">
+            <span className="text-slate-600">Subtotal</span>
+            <span className="font-medium">{usd(price.subtotal)}</span>
+          </li>
+          <li className="flex justify-between">
+            <span className="text-slate-600">Service fee</span>
+            <span className="font-medium">{usd(price.serviceFee)}</span>
+          </li>
+          <li className="flex justify-between">
+            <span className="text-slate-600">Total</span>
+            <span className="font-medium">{usd(price.total)}</span>
+          </li>
+        </ul>
+        <div className="mt-2 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
+          <div>
+            <div>Basis: {price.basis}</div>
+            {rate.airMinPrice != null && lane.mode === 'air' && (
+              <div>Min: {usd(rate.airMinPrice)}</div>
+            )}
+            {rate.seaMinPrice != null && lane.mode === 'sea' && (
+              <div>Min: {usd(rate.seaMinPrice)}</div>
+            )}
+          </div>
+          <div>
+            <div>
+              Dimensions: {dims.L_cm}×{dims.W_cm}×{dims.H_cm} cm
+            </div>
+            <div>
+              Weight: actual {weight.actualKg.toFixed(1)} kg · volumetric{' '}
+              {weight.volumetricKg.toFixed(1)} kg
+            </div>
+          </div>
         </div>
-      )}
+      </div>
 
-      <Link href="/checkout">
+      <Link
+        href={{
+          pathname: '/checkout',
+          query: {
+            origin: lane.originPort,
+            dest: lane.destPort,
+            mode: lane.mode,
+            // add price.total
+          },
+        }}
+      >
         <Button className="w-full">Reserve this price</Button>
       </Link>
+    </div>
+  );
+}
+
+function isCheapest(cmp: { sea?: LaneQuote; air?: LaneQuote }, mode: 'sea' | 'air'): boolean {
+  const a = cmp.sea?.price.total ?? Infinity;
+  const b = cmp.air?.price.total ?? Infinity;
+  const target = mode === 'sea' ? a : b;
+  const other = mode === 'sea' ? b : a;
+  return target <= other;
+}
+
+function basisText(q: LaneQuote | undefined) {
+  if (!q) return '—';
+  return q.price.basis === 'CBM' ? 'per m³' : 'per chargeable kg';
+}
+
+function numberFmt(n?: number) {
+  return typeof n === 'number' && isFinite(n) ? n : 0;
+}
+
+function CompareOption({
+  label,
+  mode,
+  quote,
+  cheapest,
+  onUse,
+}: {
+  label: string;
+  mode: 'sea' | 'air';
+  quote?: LaneQuote;
+  cheapest: boolean;
+  onUse: () => void;
+}) {
+  return (
+    <div className="rounded-lg border p-3">
+      <div className="mb-1 flex items-center justify-between">
+        <div className="text-sm font-medium text-slate-700">{label}</div>
+        {cheapest && quote && (
+          <span className="rounded bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-white">
+            Best value
+          </span>
+        )}
+      </div>
+      {quote ? (
+        <>
+          <div className="flex items-baseline justify-between">
+            <div className="text-xs text-slate-500">{basisText(quote)}</div>
+            <div className="font-heading text-2xl">{usd(numberFmt(quote.price.total))}</div>
+          </div>
+          <div className="mt-2 grid gap-2 text-xs text-slate-600 sm:grid-cols-2">
+            <div>
+              <div>Unit</div>
+              <div className="font-medium">{usd(numberFmt(quote.price.unitPrice))}</div>
+            </div>
+            <div>
+              <div>Service fee</div>
+              <div className="font-medium">{usd(numberFmt(quote.price.serviceFee))}</div>
+            </div>
+            <div>
+              <div>Dimensions</div>
+              <div className="font-medium">
+                {quote.dims.L_cm}×{quote.dims.W_cm}×{quote.dims.H_cm} cm
+              </div>
+            </div>
+            <div>
+              <div>Weight</div>
+              <div className="font-medium">
+                {quote.weight.actualKg.toFixed(1)} kg (chg {quote.weight.chargeableKg.toFixed(1)}{' '}
+                kg)
+              </div>
+            </div>
+          </div>
+          <div className="mt-3">
+            <Button onClick={onUse} className="w-full" variant={cheapest ? 'default' : 'outline'}>
+              Use {mode}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <div className="text-sm text-slate-500">No quote available.</div>
+      )}
     </div>
   );
 }
