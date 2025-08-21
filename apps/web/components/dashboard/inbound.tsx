@@ -1,4 +1,3 @@
-// apps/web/components/dashboard/inbound.tsx
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -32,7 +31,7 @@ type InboundRow = {
   lengthCm: number | null;
   widthCm: number | null;
   heightCm: number | null;
-  weightKg: string | null; // numeric as string
+  weightKg: string | null;
   notes: string | null;
   status: 'expected' | 'received' | 'measured' | 'priority_requested';
   photoUrl: string | null;
@@ -55,6 +54,19 @@ const DeclareSchema = z.object({
   notes: z.string().optional(),
 });
 
+type PriceQuote = {
+  currency: 'USD';
+  amountUsd: number;
+  breakdown: {
+    base: number;
+    minApplied: boolean;
+    serviceFee: number;
+    chargeableKg?: number;
+    volumeM3?: number;
+    rateId?: string;
+  };
+};
+
 export function InboundPanel({ userId }: { userId: string }) {
   const [hub, setHub] = useState<HubCode | null>(null);
   const [rows, setRows] = useState<InboundRow[]>([]);
@@ -62,6 +74,9 @@ export function InboundPanel({ userId }: { userId: string }) {
   const [busyDeclare, setBusyDeclare] = useState(false);
   const [log, setLog] = useState('');
   const [q, setQ] = useState('');
+
+  const [quotes, setQuotes] = useState<Record<string, PriceQuote | { error: string }>>({}); // NEW
+  const [payBusy, setPayBusy] = useState<string | null>(null); // NEW
 
   const [form, setForm] = useState({
     originPort: 'AMS',
@@ -73,7 +88,6 @@ export function InboundPanel({ userId }: { userId: string }) {
   });
 
   const load = useCallback(async () => {
-    if (!userId) return;
     setLoading(true);
     try {
       const hc = await fetch(`${API}/inbound/hub-code?userId=${encodeURIComponent(userId)}`, {
@@ -94,6 +108,7 @@ export function InboundPanel({ userId }: { userId: string }) {
   }, [userId]);
 
   useEffect(() => {
+    if (!userId) return;
     load();
   }, [load, userId]);
 
@@ -144,6 +159,50 @@ export function InboundPanel({ userId }: { userId: string }) {
     }
   }
 
+  async function getPrice(id: string) {
+    setQuotes((q) => ({ ...q, [id]: { error: 'loading' as any } }));
+    try {
+      const r = await fetch(`${API}/inbound/${id}/price`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+      });
+      const j = await r.json();
+      if (!r.ok) {
+        setQuotes((q) => ({ ...q, [id]: { error: j?.error ?? 'pricing_failed' } }));
+        return;
+      }
+      setQuotes((q) => ({ ...q, [id]: j as PriceQuote }));
+    } catch (e: any) {
+      setQuotes((q) => ({ ...q, [id]: { error: e?.message ?? 'pricing_failed' } }));
+    }
+  }
+
+  async function payInbound(row: InboundRow) {
+    const q = quotes[row.id];
+    if (!q || 'error' in q) return;
+    setPayBusy(row.id);
+    try {
+      const desc = `Containo Inbound ${row.originPort}→${row.destPort} (${row.mode})`;
+      const resp = await fetch(`${API}/payments/checkout`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          itemId: row.id,
+          amountUsd: Math.round(q.amountUsd),
+          currency: q.currency,
+          description: desc,
+        }),
+      });
+      const j = await resp.json();
+      if (!resp.ok || !j?.url) throw new Error('checkout_failed');
+      window.location.href = j.url;
+    } catch (e: any) {
+      setLog(`Payment error: ${e?.message ?? e}`);
+    } finally {
+      setPayBusy(null);
+    }
+  }
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const base = rows.slice().sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
@@ -190,7 +249,8 @@ export function InboundPanel({ userId }: { userId: string }) {
             <div className="text-slate-600">
               Location: <span className="font-medium">{hub?.hubLocation ?? '—'}</span>
             </div>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              <Input readOnly value={userId} className="w-[320px]" title="User ID" />
               <Button variant="outline" onClick={load}>
                 Refresh
               </Button>
@@ -281,6 +341,7 @@ export function InboundPanel({ userId }: { userId: string }) {
         </CardContent>
       </Card>
 
+      {/* Listing */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>My inbound parcels</CardTitle>
@@ -306,77 +367,120 @@ export function InboundPanel({ userId }: { userId: string }) {
                     <TableHead>Status</TableHead>
                     <TableHead>Dims / Weight</TableHead>
                     <TableHead>Pool</TableHead>
-                    <TableHead className="w-[150px]">Actions</TableHead>
+                    <TableHead className="w-[210px]">Actions</TableHead> {/* NEW width */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="align-top">
-                        <div className="font-mono text-xs">{r.id.slice(0, 8)}…</div>
-                        <div className="text-xs text-slate-600">
-                          {r.sellerName || '—'} {r.extTracking ? `• ${r.extTracking}` : ''}
-                        </div>
-                        <div className="text-xs text-slate-500">
-                          {new Date(r.createdAt).toLocaleString()}
-                        </div>
-                      </TableCell>
-                      <TableCell className="align-top">
-                        {r.originPort} → {r.destPort} ({r.mode})
-                      </TableCell>
-                      <TableCell className="align-top">
-                        <Badge
-                          variant={r.status === 'expected' ? 'outline' : undefined}
-                          className="capitalize"
-                        >
-                          {r.status.replace(/_/g, ' ')}
-                        </Badge>
-                        {r.freeUntilAt && (
-                          <div className="mt-1 text-[11px] text-slate-500">
-                            Free until {new Date(r.freeUntilAt).toLocaleString()}
+                  {filtered.map((r) => {
+                    const q = quotes[r.id];
+                    const canPrice =
+                      r.status !== 'priority_requested' &&
+                      r.lengthCm != null &&
+                      r.widthCm != null &&
+                      r.heightCm != null &&
+                      r.weightKg != null;
+
+                    return (
+                      <TableRow key={r.id}>
+                        <TableCell className="align-top">
+                          <div className="font-mono text-xs">{r.id.slice(0, 8)}…</div>
+                          <div className="text-xs text-slate-600">
+                            {r.sellerName || '—'} {r.extTracking ? `• ${r.extTracking}` : ''}
                           </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="align-top text-sm text-slate-700">
-                        {r.lengthCm && r.widthCm && r.heightCm ? (
-                          <div>
-                            {r.lengthCm}×{r.widthCm}×{r.heightCm} cm
+                          <div className="text-xs text-slate-500">
+                            {new Date(r.createdAt).toLocaleString()}
                           </div>
-                        ) : (
-                          <div className="text-slate-500">—</div>
-                        )}
-                        <div className="text-xs text-slate-500">
-                          {r.weightKg ? `${Number(r.weightKg)} kg` : '—'}
-                        </div>
-                      </TableCell>
-                      <TableCell className="align-top">
-                        {r.poolId ? (
-                          <code className="rounded bg-slate-50 px-1 py-0.5 text-xs">
-                            {r.poolId.slice(0, 8)}…
-                          </code>
-                        ) : (
-                          <span className="text-xs text-slate-500">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="align-top">
-                        <div className="flex flex-col gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => shipNow(r.id)}
-                            disabled={r.status === 'priority_requested'}
+                        </TableCell>
+                        <TableCell className="align-top">
+                          {r.originPort} → {r.destPort} ({r.mode})
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <Badge
+                            variant={r.status === 'expected' ? 'outline' : undefined}
+                            className="capitalize"
                           >
-                            {r.status === 'priority_requested' ? 'Requested' : 'Ship now'}
-                          </Button>
-                          {r.poolId && (
-                            <Link href="/(protected)/admin/pools" className="text-xs underline">
-                              View pools
-                            </Link>
+                            {r.status.replace(/_/g, ' ')}
+                          </Badge>
+                          {r.freeUntilAt && (
+                            <div className="mt-1 text-[11px] text-slate-500">
+                              Free until {new Date(r.freeUntilAt).toLocaleString()}
+                            </div>
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="align-top text-sm text-slate-700">
+                          {r.lengthCm && r.widthCm && r.heightCm ? (
+                            <div>
+                              {r.lengthCm}×{r.widthCm}×{r.heightCm} cm
+                            </div>
+                          ) : (
+                            <div className="text-slate-500">—</div>
+                          )}
+                          <div className="text-xs text-slate-500">
+                            {r.weightKg ? `${Number(r.weightKg)} kg` : '—'}
+                          </div>
+                        </TableCell>
+                        <TableCell className="align-top">
+                          {r.poolId ? (
+                            <code className="rounded bg-slate-50 px-1 py-0.5 text-xs">
+                              {r.poolId.slice(0, 8)}…
+                            </code>
+                          ) : (
+                            <span className="text-xs text-slate-500">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="align-top">
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => shipNow(r.id)}
+                              disabled={r.status === 'priority_requested'}
+                            >
+                              {r.status === 'priority_requested' ? 'Requested' : 'Ship now'}
+                            </Button>
+
+                            {/* NEW: price + pay */}
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => getPrice(r.id)}
+                                disabled={!canPrice}
+                                title={canPrice ? '' : 'Awaiting measurement'}
+                              >
+                                {q && !('error' in q)
+                                  ? `Price: $${Math.round(q.amountUsd)}`
+                                  : 'Get price'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => payInbound(r)}
+                                disabled={!q || 'error' in q || payBusy === r.id}
+                              >
+                                {payBusy === r.id ? 'Redirecting…' : 'Pay with card'}
+                              </Button>
+                            </div>
+
+                            {q && 'error' in q && q.error !== 'loading' ? (
+                              <div className="text-xs text-amber-700">
+                                {q.error === 'not_measured'
+                                  ? 'Awaiting measurement'
+                                  : q.error === 'no_rate'
+                                    ? 'No rate configured'
+                                    : 'Pricing failed'}
+                              </div>
+                            ) : null}
+
+                            {r.poolId && (
+                              <Link href="/(protected)/admin/pools" className="text-xs underline">
+                                View pools
+                              </Link>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
