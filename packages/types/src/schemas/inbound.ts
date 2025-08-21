@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import { InboundEventTypeSchema } from '../types/index.js';
 
 export const InboundDeclareSchema = z.object({
