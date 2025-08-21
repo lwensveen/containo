@@ -17,6 +17,7 @@
       ],
       "env": [
         "ADMIN_TOKEN",
+        "AIR_DIVISOR",
         "AIR_PRICE_PER_KG",
         "API_URL",
         "AUTH_SECRET",
