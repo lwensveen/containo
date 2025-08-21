@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db, poolsTable } from '@containo/db';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 
 export type NextLanePool = {
   id: string;

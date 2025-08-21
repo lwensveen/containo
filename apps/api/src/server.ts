@@ -21,6 +21,7 @@ import pickupsRoutes from './modules/pickups/routes.js';
 import inboundRoutes from './modules/inbound/routes.js';
 import lanesRoutes from './modules/lanes/routes.js';
 import poolsCron from './plugins/pools/cron.js';
+import adminWebhooksRoutes from './modules/webhooks/admin-routes.js';
 
 export async function buildServer() {
   const app = Fastify({ logger: true }).withTypeProvider<ZodTypeProvider>();
@@ -52,18 +53,19 @@ export async function buildServer() {
 
   app.get('/health', async () => ({ ok: true, service: 'containo-api' }));
 
+  app.register(adminWebhooksRoutes, { prefix: '/admin/webhooks' });
   app.register(buyersRoutes, { prefix: '/buyers' });
   app.register(consolidationRoutes, { prefix: '/consolidation' });
   app.register(customsRoutes, { prefix: '/customs' });
   app.register(eventsRoutes, { prefix: '/pool-events' });
   app.register(inboundRoutes, { prefix: '/inbound' });
+  app.register(lanesRoutes, { prefix: '/lanes' });
   app.register(paymentsRoutes, { prefix: '/payments' });
   app.register(pickupsRoutes, { prefix: '/pickups' });
   app.register(poolsRoutes, { prefix: '/pools' });
   app.register(sellerBatchRoutes, { prefix: '/seller-batches' });
   app.register(warehousePickupRoutes, { prefix: '/warehouse-pickups' });
   app.register(webhooksRoutes, { prefix: '/webhooks' });
-  app.register(lanesRoutes, { prefix: '/lanes' });
 
   return app;
 }

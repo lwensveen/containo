@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { emitPoolEvent } from '../events/services/emit-pool-event.js';
 import { renderReceiptPdf } from './services/render-receipt.js';
 import { recomputePoolFill } from '../pools/services/recompute-fill.js';
+import { withIdempotency } from '../../lib/idempotency.js';
 
 const AdminHeaderSchema = z.object({
   authorization: z.string().optional(),
@@ -28,6 +29,7 @@ const CheckoutBodySchema = z
     description: z.string().max(200),
     successUrl: z.url().optional(),
     cancelUrl: z.url().optional(),
+    idempotencyKey: z.string().min(8).optional(),
   })
   .refine((b) => !!b.itemId || !!b.inboundId, {
     message: 'Provide itemId or inboundId',
@@ -52,8 +54,21 @@ export default async function paymentsRoutes(app: FastifyInstance) {
       },
     },
     async (req, reply) => {
-      const { itemId, inboundId, amountUsd, currency, description, successUrl, cancelUrl } =
-        req.body;
+      const {
+        itemId,
+        inboundId,
+        amountUsd,
+        currency,
+        description,
+        successUrl,
+        cancelUrl,
+        idempotencyKey,
+      } = req.body;
+
+      const idemHeader =
+        (req.headers['idempotency-key'] as string | undefined) ||
+        (req.headers['x-idempotency-key'] as string | undefined);
+      const idemKey = idemHeader || idempotencyKey;
 
       if (itemId) {
         const [it] = await db
@@ -87,29 +102,70 @@ export default async function paymentsRoutes(app: FastifyInstance) {
         successUrl || `${webBase}/(protected)/checkout/success?session_id={CHECKOUT_SESSION_ID}`;
       const cancel_url = cancelUrl || `${webBase}/(protected)/checkout/cancel`;
 
-      const session = await stripe.checkout.sessions.create({
-        mode: 'payment',
-        line_items: [
+      const run = async () => {
+        const session = await stripe.checkout.sessions.create(
           {
-            price_data: {
-              currency,
-              unit_amount: Math.round(amountUsd * 100),
-              product_data: {
-                name: description,
+            mode: 'payment',
+            line_items: [
+              {
+                price_data: {
+                  currency,
+                  unit_amount: Math.round(amountUsd * 100),
+                  product_data: {
+                    name: description,
+                  },
+                },
+                quantity: 1,
               },
+            ],
+            success_url,
+            cancel_url,
+            metadata: {
+              itemId: itemId ?? '',
+              inboundId: inboundId ?? '',
             },
-            quantity: 1,
           },
-        ],
-        success_url,
-        cancel_url,
-        metadata: {
-          itemId: itemId ?? '',
-          inboundId: inboundId ?? '',
-        },
-      });
+          idemKey ? { idempotencyKey: `checkout:${idemKey}` } : undefined
+        );
 
-      return reply.send({ url: session.url! });
+        return { url: session.url!, sessionId: session.id };
+      };
+
+      try {
+        const data = idemKey
+          ? await withIdempotency(
+              'payments.checkout',
+              idemKey,
+              {
+                itemId,
+                inboundId,
+                amountUsd,
+                currency,
+                description,
+                success_url,
+                cancel_url,
+              },
+              run,
+              {
+                onReplay: async (cached) => {
+                  const sid = (cached as any)?.sessionId as string | undefined;
+                  if (!sid) return null;
+                  const s = await stripe.checkout.sessions.retrieve(sid).catch(() => null);
+                  if (s?.status === 'expired') {
+                    const fresh = await run();
+                    return fresh;
+                  }
+                  return null;
+                },
+              }
+            )
+          : await run();
+
+        return reply.send({ url: data.url });
+      } catch (err: any) {
+        const code = err?.statusCode ?? 500;
+        return reply.code(code).send({ error: String(err?.message ?? err) });
+      }
     }
   );
 
@@ -159,14 +215,16 @@ export default async function paymentsRoutes(app: FastifyInstance) {
                   sessionId: session.id,
                 },
               });
+
+              await recomputePoolFill(row.poolId);
             }
           }
         }
 
-        // Inbound flow: we only keep metadata for now; hook up events/DB if needed later
+        // Inbound flow: metadata only for now (can be expanded later)
         if (inboundId) {
           req.log.info({ inboundId, sessionId: session.id }, 'inbound payment completed');
-          // TODO (optional):
+          // Optional future:
           // - Insert a payment record for inbound
           // - Emit an inbound event like 'priority_paid'
           // - Trigger DAP/DDP quotation flow, etc.
@@ -174,7 +232,8 @@ export default async function paymentsRoutes(app: FastifyInstance) {
       }
 
       if (event.type === 'checkout.session.expired') {
-        // noop for now; you may want to move item back from pay_pending
+        // Optional: move item back from pay_pending to pooled/pending
+        // (left as-is to avoid scope imports; you implemented this in your webhook module earlier)
       }
 
       return reply.code(200).send({ received: true });

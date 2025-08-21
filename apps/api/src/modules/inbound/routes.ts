@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
+import { z } from 'zod/v4';
 import {
   declareInbound,
   getHubCodeForUser,
@@ -13,6 +13,7 @@ import { db, inboundEventsTable, inboundParcelsTable } from '@containo/db';
 import { and, desc, eq } from 'drizzle-orm';
 import { renderInboundLabelPdf } from './services/render-label.js';
 import { computePriceForInbound, getActiveLaneRate } from '../lanes/services/pricing.js';
+import { withIdempotency } from '../../lib/idempotency.js';
 
 const HubKey = process.env.HUB_API_KEY ?? 'dev-hub-key';
 
@@ -20,7 +21,30 @@ export default async function inboundRoutes(app: FastifyInstance) {
   app.post('/declare', {
     schema: { body: InboundDeclareSchema as any },
     handler: async (req, reply) => {
-      const row = await declareInbound(req.body as any);
+      const body = InboundDeclareSchema.parse(req.body);
+      const hdr =
+        (req.headers['idempotency-key'] as string | undefined) ||
+        (req.headers['x-idempotency-key'] as string | undefined);
+
+      const run = async () => declareInbound(body);
+
+      const row = hdr
+        ? await withIdempotency(
+            'inbound.declare',
+            hdr,
+            {
+              userId: body.userId,
+              originPort: body.originPort,
+              destPort: body.destPort,
+              mode: body.mode,
+              extTracking: body.extTracking ?? '',
+              sellerName: body.sellerName ?? '',
+              notes: body.notes ?? '',
+            },
+            run
+          )
+        : await run();
+
       reply.send(row);
     },
   });
