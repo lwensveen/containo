@@ -17,31 +17,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { InboundEvent } from '@containo/types/dist/types/inbound';
+import { InboundRow, money, STORAGE_CURRENCY, storageEstimate } from '@/lib/utils';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
-
-type InboundRow = {
-  id: string;
-  userId: string;
-  hubCode: string;
-  originPort: string;
-  destPort: string;
-  mode: 'air' | 'sea';
-  sellerName: string | null;
-  extTracking: string | null;
-  lengthCm: number | null;
-  widthCm: number | null;
-  heightCm: number | null;
-  weightKg: string | null;
-  notes: string | null;
-  status: 'expected' | 'received' | 'measured' | 'priority_requested';
-  photoUrl: string | null;
-  poolId: string | null;
-  receivedAt: string | null;
-  freeUntilAt: string | null;
-  createdAt: string;
-  updatedAt?: string;
-};
 
 type HubCode = { userId: string; hubCode: string; hubLocation: string };
 
@@ -78,6 +56,34 @@ export function InboundPanel({ userId }: { userId: string }) {
   const [q, setQ] = useState('');
   const [quotes, setQuotes] = useState<Record<string, PriceQuote | { error: string }>>({});
   const [payBusy, setPayBusy] = useState<string | null>(null);
+  const [payOpen, setPayOpen] = useState<{ id: string } | null>(null);
+  const [payUsd, setPayUsd] = useState<string>('120'); // sensible default
+  const [busyPay, setBusyPay] = useState(false);
+
+  async function payPriority(inboundId: string) {
+    setBusyPay(true);
+    try {
+      const amount = Math.max(1, Math.floor(Number(payUsd)));
+      const body = {
+        inboundId,
+        amountUsd: amount,
+        currency: 'USD',
+        description: 'Priority ship (inbound)',
+      };
+      const r = await fetch(`${API}/payments/checkout`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const j = await r.json();
+      if (!r.ok || !j?.url) throw new Error(`Checkout failed: ${r.status}`);
+      window.location.href = j.url;
+    } catch (e: any) {
+      setLog(String(e?.message ?? e));
+    } finally {
+      setBusyPay(false);
+    }
+  }
 
   const [form, setForm] = useState({
     originPort: 'AMS',
@@ -208,7 +214,7 @@ export function InboundPanel({ userId }: { userId: string }) {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          itemId: row.id,
+          payInbound: row.id,
           amountUsd: Math.round(q.amountUsd),
           currency: q.currency,
           description: desc,
@@ -244,6 +250,19 @@ export function InboundPanel({ userId }: { userId: string }) {
         .includes(needle)
     );
   }, [rows, q]);
+
+  const storageTotals = useMemo(() => {
+    let amount = 0;
+    let count = 0;
+    for (const r of filtered) {
+      const est = storageEstimate(r);
+      if (est.days > 0) {
+        amount += est.amount;
+        count += 1;
+      }
+    }
+    return { amount, count };
+  }, [filtered]);
 
   const copyHubCode = async () => {
     if (!hub?.hubCode) return;
@@ -363,6 +382,26 @@ export function InboundPanel({ userId }: { userId: string }) {
       </Card>
 
       <Card>
+        <CardHeader>
+          <CardTitle>Storage (estimated)</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center gap-6 text-sm text-slate-700">
+          <div>
+            Accruing today on&nbsp;
+            <span className="font-medium">{storageTotals.count}</span>
+            &nbsp;parcel{storageTotals.count === 1 ? '' : 's'}
+          </div>
+          <div className="ml-4">
+            Estimated total:&nbsp;
+            <span className="font-semibold">{money(storageTotals.amount)}</span>
+          </div>
+          <div className="text-xs text-slate-500">
+            Estimate = days overdue × (base/day + m³ × rate/day). Uses {STORAGE_CURRENCY}.
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>My inbound parcels</CardTitle>
           <div className="flex items-center gap-2">
@@ -386,8 +425,9 @@ export function InboundPanel({ userId }: { userId: string }) {
                     <TableHead>Lane</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Dims / Weight</TableHead>
+                    <TableHead>Storage (est.)</TableHead>
                     <TableHead>Pool</TableHead>
-                    <TableHead className="w-[210px]">Actions</TableHead> {/* NEW width */}
+                    <TableHead className="w-[150px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -459,6 +499,23 @@ export function InboundPanel({ userId }: { userId: string }) {
                             {r.weightKg ? `${Number(r.weightKg)} kg` : '—'}
                           </div>
                         </TableCell>
+                        <TableCell className="align-top text-sm">
+                          {(() => {
+                            const est = storageEstimate(r);
+                            if (est.days <= 0) {
+                              return <span className="text-xs text-slate-500">Free</span>;
+                            }
+                            return (
+                              <div>
+                                <div className="font-medium">{money(est.amount)}</div>
+                                <div className="text-xs text-slate-500">
+                                  {est.days} day{est.days > 1 ? 's' : ''}{' '}
+                                  {est.vol ? `• ${est.vol.toFixed(2)} m³` : '• —'}
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </TableCell>
                         <TableCell className="align-top">
                           {r.poolId ? (
                             <code className="rounded bg-slate-50 px-1 py-0.5 text-xs">
@@ -479,7 +536,14 @@ export function InboundPanel({ userId }: { userId: string }) {
                               {r.status === 'priority_requested' ? 'Requested' : 'Ship now'}
                             </Button>
 
-                            {/* NEW: price + pay */}
+                            <Button
+                              size="sm"
+                              onClick={() => setPayOpen({ id: r.id })}
+                              disabled={r.status === 'priority_requested'}
+                            >
+                              Pay now
+                            </Button>
+
                             <div className="flex items-center gap-2">
                               <Button
                                 size="sm"
@@ -529,6 +593,30 @@ export function InboundPanel({ userId }: { userId: string }) {
           )}
         </CardContent>
       </Card>
+
+      {payOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-lg bg-white p-4 shadow">
+            <div className="mb-2 text-sm font-semibold">Priority ship — one-off payment</div>
+            <label className="mb-1 block text-xs text-slate-600">Amount (USD)</label>
+            <Input
+              type="number"
+              min={1}
+              value={payUsd}
+              onChange={(e) => setPayUsd(e.target.value)}
+              className="mb-3"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setPayOpen(null)} disabled={busyPay}>
+                Cancel
+              </Button>
+              <Button onClick={() => payPriority(payOpen.id)} disabled={busyPay}>
+                {busyPay ? 'Redirecting…' : 'Pay now'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
