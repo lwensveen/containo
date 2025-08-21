@@ -1,6 +1,7 @@
 import { Container } from '@/components/layout/container';
 import { cn } from '@/lib/utils';
 import React from 'react';
+import Image from 'next/image';
 
 function PrintButton() {
   'use client';
@@ -101,7 +102,7 @@ export default async function InboundSharePage({
               <div className="rounded-md bg-slate-900 px-3 py-2 font-mono text-2xl font-semibold tracking-widest text-white">
                 {hubCode}
               </div>
-              <img
+              <Image
                 src={qrUrl}
                 alt={`QR code for ${hubCode}`}
                 className="mt-2 h-[220px] w-[220px] rounded-md border bg-white"
