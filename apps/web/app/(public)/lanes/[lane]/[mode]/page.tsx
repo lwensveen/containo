@@ -57,13 +57,13 @@ export default function LanePage() {
     return () => clearInterval(t);
   }, []);
 
-  if (err === 'bad_lane') return notFound();
-
   const secondsLeft = useMemo(() => {
     if (!data) return 0;
     const cutoff = new Date(data.cutoffISO).getTime();
     return Math.max(0, Math.floor((cutoff - now) / 1000));
   }, [data, now]);
+
+  if (err === 'bad_lane') return notFound();
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
