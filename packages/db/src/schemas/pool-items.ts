@@ -26,7 +26,6 @@ export const poolItemsTable = pgTable(
     destPort: varchar('dest_port', { length: 3 }).notNull(),
     mode: modeEnum('mode').notNull(),
     stripeSessionId: text('stripe_session_id'),
-    idempotencyKey: text('idempotency_key'),
     cutoffAt: timestamp('cutoff_at', { withTimezone: true }).notNull(),
     weightKg: numeric('weight_kg').notNull(),
     volumeM3: numeric('volume_m3').notNull(),
@@ -43,7 +42,6 @@ export const poolItemsTable = pgTable(
       .where(sql`status = 'pending'`),
     index('idx_items_by_pool').on(table.poolId),
     index('idx_items_user_created').on(table.userId, table.createdAt),
-    uniqueIndex('ux_pool_items_idempotency').on(table.idempotencyKey),
     uniqueIndex('ux_pool_items_stripe_session').on(table.stripeSessionId),
   ]
 );
