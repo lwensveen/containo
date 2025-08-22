@@ -32,7 +32,7 @@ export default function AdminPoolsPage() {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ status }),
     });
-    if (r.ok) load();
+    if (r.ok) await load();
   }
 
   const pct = (p: Pool) => {

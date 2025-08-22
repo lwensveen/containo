@@ -113,7 +113,7 @@ export default function AdminLanesPage() {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ status }),
     });
-    if (r.ok) load();
+    if (r.ok) await load();
   }
 
   return (
