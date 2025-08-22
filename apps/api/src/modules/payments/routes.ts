@@ -1,12 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import Stripe from 'stripe';
 import { z } from 'zod/v4';
-import { db, poolItemsTable } from '@containo/db';
+import { db, poolItemsTable, usersTable } from '@containo/db';
 import { eq } from 'drizzle-orm';
 import { emitPoolEvent } from '../events/services/emit-pool-event.js';
 import { renderReceiptPdf } from './services/render-receipt.js';
 import { recomputePoolFill } from '../pools/services/recompute-fill.js';
 import { withIdempotency } from '../../lib/idempotency.js';
+import { emailPaymentSuccess } from '../notifications/inbound-emails.js';
 
 const AdminHeaderSchema = z.object({
   authorization: z.string().optional(),
@@ -149,11 +150,13 @@ export default async function paymentsRoutes(app: FastifyInstance) {
               {
                 onReplay: async (cached) => {
                   const sid = (cached as any)?.sessionId as string | undefined;
+
                   if (!sid) return null;
-                  const s = await stripe.checkout.sessions.retrieve(sid).catch(() => null);
-                  if (s?.status === 'expired') {
-                    const fresh = await run();
-                    return fresh;
+
+                  const session = await stripe.checkout.sessions.retrieve(sid).catch(() => null);
+
+                  if (session?.status === 'expired') {
+                    return await run();
                   }
                   return null;
                 },
@@ -218,6 +221,25 @@ export default async function paymentsRoutes(app: FastifyInstance) {
 
               await recomputePoolFill(row.poolId);
             }
+
+            try {
+              const [u] = await db
+                .select({ email: usersTable.email, name: usersTable.name })
+                .from(usersTable)
+                .where(eq(usersTable.id, row.userId))
+                .limit(1);
+
+              if (u?.email) {
+                await emailPaymentSuccess({
+                  to: u.email,
+                  buyerName: u.name ?? null,
+                  amountUsd: (session.amount_total ?? 0) / 100,
+                  sessionId: session.id,
+                });
+              }
+            } catch (e) {
+              req.log.error({ err: e }, 'emailPaymentSuccess failed');
+            }
           }
         }
 
@@ -233,7 +255,7 @@ export default async function paymentsRoutes(app: FastifyInstance) {
 
       if (event.type === 'checkout.session.expired') {
         // Optional: move item back from pay_pending to pooled/pending
-        // (left as-is to avoid scope imports; you implemented this in your webhook module earlier)
+        // (left as-is to avoid scope imports; you implemented this in webhook module earlier)
       }
 
       return reply.code(200).send({ received: true });
