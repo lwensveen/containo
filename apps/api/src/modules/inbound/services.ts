@@ -1,8 +1,18 @@
 import { and, desc, eq } from 'drizzle-orm';
-import { db, inboundEventsTable, inboundParcelsTable, userHubCodesTable } from '@containo/db';
+import {
+  db,
+  inboundEventsTable,
+  inboundParcelsTable,
+  userHubCodesTable,
+  usersTable,
+} from '@containo/db';
 import type { InboundDeclare, InboundReceive } from '@containo/types';
 import { findNextOpenPoolIdForLane } from '../lanes/services.js';
 import { emitInboundEvent } from '../events/services/emit-inbound-event.js';
+import {
+  emailInboundMeasuredPendingPrice,
+  emailInboundReceived,
+} from '../notifications/inbound-emails.js';
 
 function genHubCode(country: string = 'TH') {
   const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -134,14 +144,50 @@ export async function hubReceiveOrMeasure(args: InboundReceive) {
       },
     });
 
+    try {
+      const [u] = await db
+        .select({ email: usersTable.email, name: usersTable.name })
+        .from(usersTable)
+        .where(eq(usersTable.id, prev.userId))
+        .limit(1);
+
+      const to = u?.email;
+      if (to) {
+        if (prev.status === 'expected') {
+          await emailInboundReceived({
+            to,
+            buyerName: u?.name ?? null,
+            inboundId: row.id,
+            hubCode: row.hubCode,
+            sellerName: row.sellerName ?? undefined,
+            extTracking: row.extTracking ?? undefined,
+            freeUntilAt: row.freeUntilAt ?? null,
+            photoUrl: row.photoUrl ?? undefined,
+          });
+        }
+
+        if (measured) {
+          await emailInboundMeasuredPendingPrice({
+            to,
+            buyerName: u?.name ?? null,
+            inboundId: row.id,
+            dims: {
+              l: row.lengthCm ?? null,
+              w: row.widthCm ?? null,
+              h: row.heightCm ?? null,
+              kg: row.weightKg != null ? Number(row.weightKg) : null,
+            },
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('[mail] inbound notify failed:', e);
+    }
+
     return row;
   });
 }
 
-/**
- * User requests priority shipping (no pool). For MVP we just mark an event.
- * (You can wire this to your checkout flow next.)
- */
 export async function requestPriorityShip(inboundId: string, userId: string) {
   const [row] = await db
     .update(inboundParcelsTable)

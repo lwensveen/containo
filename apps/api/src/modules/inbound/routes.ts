@@ -9,11 +9,18 @@ import {
 } from './services.js';
 import { InboundDeclareSchema, InboundReceiveSchema } from '@containo/types';
 import { getHubConfig } from './hub-config.js';
-import { db, inboundEventsTable, inboundParcelsTable } from '@containo/db';
+import {
+  db,
+  inboundEventsTable,
+  inboundParcelsTable,
+  userHubCodesTable,
+  usersTable,
+} from '@containo/db';
 import { and, desc, eq } from 'drizzle-orm';
 import { renderInboundLabelPdf } from './services/render-label.js';
 import { computePriceForInbound, getActiveLaneRate } from '../lanes/services/pricing.js';
 import { withIdempotency } from '../../lib/idempotency.js';
+import { emailSellerInstructions } from '../notifications/inbound-emails.js';
 
 const HubKey = process.env.HUB_API_KEY ?? 'dev-hub-key';
 
@@ -310,6 +317,33 @@ export default async function inboundRoutes(app: FastifyInstance) {
         .limit(limit);
 
       reply.send(rows);
+    },
+  });
+
+  app.post('/email-seller-instructions', {
+    schema: { body: z.object({ userId: z.string().uuid() }) as any },
+    handler: async (req, reply) => {
+      const { userId } = req.body as { userId: string };
+      const [u] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+      const [hc] = await db
+        .select()
+        .from(userHubCodesTable)
+        .where(eq(userHubCodesTable.userId, userId))
+        .limit(1);
+
+      if (!u?.email || !hc?.hubCode) return reply.badRequest('Missing email or hub code');
+
+      const labelUrl = `${process.env.API_BASE_URL || 'http://localhost:4000'}/inbound/label.pdf?hubCode=${encodeURIComponent(hc.hubCode)}`;
+
+      await emailSellerInstructions({
+        to: u.email,
+        buyerName: (u as any).name ?? null,
+        hubCode: hc.hubCode,
+        hubLocation: hc.hubLocation ?? null,
+        labelUrl,
+      });
+
+      reply.send({ ok: true });
     },
   });
 }
