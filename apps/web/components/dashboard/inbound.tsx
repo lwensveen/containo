@@ -57,8 +57,9 @@ export function InboundPanel({ userId }: { userId: string }) {
   const [quotes, setQuotes] = useState<Record<string, PriceQuote | { error: string }>>({});
   const [payBusy, setPayBusy] = useState<string | null>(null);
   const [payOpen, setPayOpen] = useState<{ id: string } | null>(null);
-  const [payUsd, setPayUsd] = useState<string>('120'); // sensible default
+  const [payUsd, setPayUsd] = useState<string>('120');
   const [busyPay, setBusyPay] = useState(false);
+  const [emailing, setEmailing] = useState(false);
 
   async function payPriority(inboundId: string) {
     setBusyPay(true);
@@ -270,6 +271,26 @@ export function InboundPanel({ userId }: { userId: string }) {
     setLog('Hub code copied.');
   };
 
+  const emailInstructions = async () => {
+    if (!userId) return;
+    setEmailing(true);
+    setLog('');
+    try {
+      const r = await fetch(`${API}/inbound/email-seller-instructions`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`);
+      setLog('Seller instructions sent to your email.');
+    } catch (e: any) {
+      setLog(String(e?.message ?? e));
+    } finally {
+      setEmailing(false);
+    }
+  };
+
   const swap = () => setForm((f) => ({ ...f, originPort: f.destPort, destPort: f.originPort }));
 
   return (
@@ -286,6 +307,14 @@ export function InboundPanel({ userId }: { userId: string }) {
             <Button variant="outline" onClick={copyHubCode} disabled={!hub?.hubCode}>
               Copy
             </Button>
+            <Button
+              variant="outline"
+              onClick={emailInstructions}
+              disabled={!hub?.hubCode || emailing}
+              title="Email seller instructions (to your account email)"
+            >
+              {emailing ? 'Sending…' : 'Email me instructions'}
+            </Button>
             <div className="text-slate-600">
               Location: <span className="font-medium">{hub?.hubLocation ?? '—'}</span>
             </div>
@@ -301,6 +330,7 @@ export function InboundPanel({ userId }: { userId: string }) {
             <span className="font-mono">“{hub?.hubCode ?? 'CTN-TH-XXXXXX'}”</span> on the label and
             include their tracking number.
           </p>
+          {log && <div className="text-xs text-slate-600">{log}</div>}
         </CardContent>
       </Card>
 
