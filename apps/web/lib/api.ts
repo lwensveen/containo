@@ -88,7 +88,7 @@ export async function getPools(): Promise<Pool[]> {
 export async function getPoolItems(poolId: string) {
   const res = await fetch(`${API}/pools/${poolId}/items`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Pool items failed: ${res.status}`);
-  return res.json() as Promise<{
+  return (await await res.json()) as Promise<{
     pool: Pool;
     items: Array<{
       id: string;
@@ -115,7 +115,7 @@ export async function setPoolStatus(poolId: string, status: 'open' | 'closing' |
     body: JSON.stringify({ status }),
   });
   if (!res.ok) throw new Error(`Update status failed: ${res.status}`);
-  return res.json() as Promise<Pool>;
+  return (await res.json()) as Promise<Pool>;
 }
 
 export type WebhookSubscription = {
@@ -152,5 +152,5 @@ export async function setWebhookActive(id: string, active: boolean) {
   const path = active ? 'enable' : 'disable';
   const res = await fetch(`${API}/webhooks/subscriptions/${id}/${path}`, { method: 'POST' });
   if (!res.ok) throw new Error(`Toggle webhook failed: ${res.status}`);
-  return res.json() as Promise<WebhookSubscription>;
+  return (await res.json()) as Promise<WebhookSubscription>;
 }
